@@ -165,4 +165,10 @@ void IDAstar::print_statistics() const {
     statistics.print_detailed_statistics();
 }
 
+void add_options_to_feature(plugins::Feature &feature) {
+    SearchAlgorithm::add_pruning_option(feature);
+    SearchAlgorithm::add_options_to_feature(feature);
+}
+
+
 }

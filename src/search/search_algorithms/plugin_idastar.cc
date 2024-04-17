@@ -8,7 +8,7 @@ using namespace std;
 namespace plugin_idastar {
 class IDAstarFeature : public plugins::TypedFeature<SearchAlgorithm, idastar::IDAstar> {
 public:
-    EagerSearchFeature() : TypedFeature("idastar") {
+    IDAstarFeature() : TypedFeature("idastar") {
         document_title("IDA* search");
         document_synopsis("");
 
@@ -26,9 +26,9 @@ public:
             "preferred",
             "use preferred operators of these evaluators",
             "[]");
-        eager_search::add_options_to_feature(*this);
+        idastar::add_options_to_feature(*this);
     }
 };
 
-static plugins::FeaturePlugin<EagerSearchFeature> _plugin;
+static plugins::FeaturePlugin<IDAstarFeature> _plugin;
 }
