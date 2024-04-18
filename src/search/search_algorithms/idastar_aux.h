@@ -1,10 +1,8 @@
-#ifndef SEARCH_ALGORITHMS_IDASTAR_H
-#define SEARCH_ALGORITHMS_IDASTAR_H
+#ifndef SEARCH_ALGORITHMS_IDASTAR_AUX__H
+#define SEARCH_ALGORITHMS_IDASTAR_AUX_H
 
 #include "../open_list.h"
 #include "../search_algorithm.h"
-
-#include "idastar_aux.h"
 
 #include <memory>
 #include <vector>
@@ -16,8 +14,8 @@ namespace plugins {
 class Feature;
 }
 
-namespace idastar {
-class IDAstar : public SearchAlgorithm {
+namespace idastar_aux {
+class IDAstar_aux : public SearchAlgorithm {
     const bool reopen_closed_nodes;
 
     std::unique_ptr<StateOpenList> open_list;
@@ -33,15 +31,12 @@ class IDAstar : public SearchAlgorithm {
     void update_f_value_statistics(EvaluationContext &eval_context);
     void reward_progress();
 
-    idastar_aux::IDAstar_aux idastar_aux;
-
-protected:
+public:
     virtual void initialize() override;
     virtual SearchStatus step() override;
-
-public:
-    explicit IDAstar(const plugins::Options &opts);
-    virtual ~IDAstar() = default;
+    
+    explicit IDAstar_aux(const plugins::Options &opts);
+    virtual ~IDAstar_aux() = default;
 
     virtual void print_statistics() const override;
 

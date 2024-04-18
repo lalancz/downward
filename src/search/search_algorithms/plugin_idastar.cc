@@ -9,7 +9,7 @@ namespace plugin_idastar {
 class IDAstarFeature : public plugins::TypedFeature<SearchAlgorithm, idastar::IDAstar> {
 public:
     IDAstarFeature() : TypedFeature("idastar") {
-        document_title("IDA* search");
+        document_title("Eager best-first search");
         document_synopsis("");
 
         add_option<shared_ptr<OpenListFactory>>("open", "open list");
