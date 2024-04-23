@@ -40,9 +40,7 @@ void IDAstar::initialize() {
 }
 
 void IDAstar::print_statistics() const {
-    statistics.print_detailed_statistics();
-    search_space.print_statistics();
-    pruning_method->print_statistics();
+    idastar_aux.print_statistics();
 }
 
 SearchStatus IDAstar::step() {
