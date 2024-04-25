@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include <stack>
 
 class Evaluator;
 class PruningMethod;
@@ -34,7 +35,7 @@ class IDAstar_aux : public SearchAlgorithm {
 public:
     virtual void initialize() override;
     virtual SearchStatus step() override;
-    virtual int search(EvaluationContext &eval_context, int g, int bound);
+    virtual int search(std::stack<StateID> path, int g, int bound);
     
     explicit IDAstar_aux(const plugins::Options &opts);
     virtual ~IDAstar_aux() = default;

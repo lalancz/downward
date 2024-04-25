@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <stack>
 
 using namespace std;
 
@@ -97,26 +98,12 @@ void IDAstar::initialize() {
         node.open_initial();
 
         open_list->insert(eval_context, initial_state.get_id());
+        path.push(initial_state.get_id());
     }
 
     print_initial_evaluator_values(eval_context);
 
     pruning_method->initialize(task);
-}
-
-void IDAstar::print_statistics() const {
-    idastar_aux.print_statistics();
-}
-
-SearchStatus IDAstar::step() {
-    optional<SearchNode> node;
-
-    StateID id = open_list->remove_min();
-    State state = state_registry.lookup_state(id);
-    node.emplace(search_space.get_node(state));
-    const State &s = node->get_state();
-
-    EvaluationContext eval_context(s, 0, false, &statistics);
 
     if (f_evaluator) {
         int bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
@@ -125,20 +112,33 @@ SearchStatus IDAstar::step() {
     } else {
         int bound = 1000000;
     }
-    
+}
 
-    while (true) {
-        log << "Bound is " << bound << endl;
-        int t = idastar_aux.search(eval_context, 0, bound);
-        if (t == SOLVED) {
-            log << "Found a solution with cost " << bound << endl;
-            return SOLVED;
-        } else if (t == FAILED) {
-            return FAILED;
-        }
+void IDAstar::print_statistics() const {
+    idastar_aux.print_statistics();
+}
 
-        bound = t;
+SearchStatus IDAstar::step() {
+    if (open_list->empty()) {
+        log << "Open list is empty -- no solution!" << endl;
+        return FAILED;
     }
+
+    log << "Bound is " << bound << endl;
+    int t = idastar_aux.search(path, 0, bound);
+    if (t == SOLVED) {
+        log << "Found a solution with cost " << bound << endl;
+        return SOLVED;
+    } else if (t == FAILED) {
+        return FAILED;
+    } else if (t == numeric_limits<int>::max()) {
+        log << "Current bound is infinity. No solution!" << endl;
+        return FAILED;
+    }
+
+    bound = t;
+
+    return IN_PROGRESS;
 }
 
 void IDAstar::reward_progress() {

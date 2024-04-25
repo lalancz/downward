@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <stack>
 
 using namespace std;
 
@@ -111,13 +112,7 @@ SearchStatus IDAstar_aux::step() {
     return SOLVED;
 }
 
-int IDAstar_aux::search(EvaluationContext &eval_context, int g, int bound) {
-        if (open_list->empty()) {
-        log << "Open list is empty -- no solution!" << endl;
-        return FAILED;
-    }
-
-
+int IDAstar_aux::search(std::stack<StateID> path, int g, int bound) {
     optional<SearchNode> node;
 
     StateID id = open_list->remove_min();
@@ -130,7 +125,7 @@ int IDAstar_aux::search(EvaluationContext &eval_context, int g, int bound) {
         return SOLVED;
     }
     
-
+    EvaluationContext eval_context(s, node->get_g(), false, &statistics);
     int h = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     int f = node->get_g() + h;
 
@@ -154,16 +149,16 @@ int IDAstar_aux::search(EvaluationContext &eval_context, int g, int bound) {
 
         succ_node.open(*node, op, get_adjusted_cost(op));
         open_list->insert(succ_eval_context, succ_state.get_id());
+        path.push(succ_state.get_id());
 
-        int succ_h = succ_eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
-        int succ_f = succ_g + succ_h;
-        if (succ_f > bound) {
-            next_bound = min(next_bound, succ_f);
-        } else {
-            int status = search(succ_eval_context, succ_g, bound);
-            if (status != FAILED)
-                return status;
+        int t = search(path, succ_g, bound);
+        if (t == SOLVED) {
+            return SOLVED;
+        } else if (t < next_bound) {
+            next_bound = t;
         }
+
+        path.pop();
     }
 
     return next_bound;

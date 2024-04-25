@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <vector>
+#include <stack>
 
 class Evaluator;
 class PruningMethod;
@@ -21,6 +22,7 @@ class IDAstar : public SearchAlgorithm {
     const bool reopen_closed_nodes;
 
     std::unique_ptr<StateOpenList> open_list;
+    std::stack<StateID> path;
     std::shared_ptr<Evaluator> f_evaluator;
 
     std::vector<Evaluator *> path_dependent_evaluators;
