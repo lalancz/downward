@@ -37,6 +37,71 @@ IDAstar::IDAstar(const plugins::Options &opts)
 
 void IDAstar::initialize() {
     idastar_aux.initialize();
+
+        log << "Conducting best first search"
+        << (reopen_closed_nodes ? " with" : " without")
+        << " reopening closed nodes, (real) bound = " << bound
+        << endl;
+    assert(open_list);
+
+    set<Evaluator *> evals;
+    open_list->get_path_dependent_evaluators(evals);
+
+    /*
+      Collect path-dependent evaluators that are used for preferred operators
+      (in case they are not also used in the open list).
+    */
+    for (const shared_ptr<Evaluator> &evaluator : preferred_operator_evaluators) {
+        evaluator->get_path_dependent_evaluators(evals);
+    }
+
+    /*
+      Collect path-dependent evaluators that are used in the f_evaluator.
+      They are usually also used in the open list and will hence already be
+      included, but we want to be sure.
+    */
+    if (f_evaluator) {
+        f_evaluator->get_path_dependent_evaluators(evals);
+    }
+
+    /*
+      Collect path-dependent evaluators that are used in the lazy_evaluator
+      (in case they are not already included).
+    */
+    if (lazy_evaluator) {
+        lazy_evaluator->get_path_dependent_evaluators(evals);
+    }
+
+    path_dependent_evaluators.assign(evals.begin(), evals.end());
+
+    State initial_state = state_registry.get_initial_state();
+    for (Evaluator *evaluator : path_dependent_evaluators) {
+        evaluator->notify_initial_state(initial_state);
+    }
+
+    /*
+      Note: we consider the initial state as reached by a preferred
+      operator.
+    */
+    EvaluationContext eval_context(initial_state, 0, true, &statistics);
+
+    statistics.inc_evaluated_states();
+
+    if (open_list->is_dead_end(eval_context)) {
+        log << "Initial state is a dead end." << endl;
+    } else {
+        if (search_progress.check_progress(eval_context))
+            statistics.print_checkpoint_line(0);
+        start_f_value_statistics(eval_context);
+        SearchNode node = search_space.get_node(initial_state);
+        node.open_initial();
+
+        open_list->insert(eval_context, initial_state.get_id());
+    }
+
+    print_initial_evaluator_values(eval_context);
+
+    pruning_method->initialize(task);
 }
 
 void IDAstar::print_statistics() const {
@@ -44,7 +109,36 @@ void IDAstar::print_statistics() const {
 }
 
 SearchStatus IDAstar::step() {
-    return idastar_aux.step();
+    optional<SearchNode> node;
+
+    StateID id = open_list->remove_min();
+    State state = state_registry.lookup_state(id);
+    node.emplace(search_space.get_node(state));
+    const State &s = node->get_state();
+
+    EvaluationContext eval_context(s, 0, false, &statistics);
+
+    if (f_evaluator) {
+        int bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+    } else if (lazy_evaluator) {
+        int bound = eval_context.get_evaluator_value_or_infinity(lazy_evaluator.get());
+    } else {
+        int bound = 1000000;
+    }
+    
+
+    while (true) {
+        log << "Bound is " << bound << endl;
+        int t = idastar_aux.search(eval_context, 0, bound);
+        if (t == SOLVED) {
+            log << "Found a solution with cost " << bound << endl;
+            return SOLVED;
+        } else if (t == FAILED) {
+            return FAILED;
+        }
+
+        bound = t;
+    }
 }
 
 void IDAstar::reward_progress() {

@@ -108,47 +108,65 @@ void IDAstar_aux::print_statistics() const {
 }
 
 SearchStatus IDAstar_aux::step() {
-    const State &s = node->get_state();
-    if (check_goal_and_set_plan(s))
-        return SOLVED;
+    return SOLVED;
+}
 
-    EvaluationContext eval_context(s, node->get_g(), false, &statistics);
+int IDAstar_aux::search(EvaluationContext &eval_context, int g, int bound) {
+        if (open_list->empty()) {
+        log << "Open list is empty -- no solution!" << endl;
+        return FAILED;
+    }
+
+
+    optional<SearchNode> node;
+
+    StateID id = open_list->remove_min();
+    State state = state_registry.lookup_state(id);
+    node.emplace(search_space.get_node(state));
+    const State &s = node->get_state();
+    if (check_goal_and_set_plan(s)){
+        std::cout << "Found a solution with cost " << node->get_g() << endl;
+    
+        return SOLVED;
+    }
+    
+
     int h = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     int f = node->get_g() + h;
 
     if (f > bound)
         return f;
 
+    vector<OperatorID> applicable_ops;
+    successor_generator.generate_applicable_ops(s, applicable_ops);
+
+    int next_bound = numeric_limits<int>::max();
     for (OperatorID op_id : applicable_ops) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
 
         State succ_state = state_registry.get_successor_state(s, op);
-        staistics.inc_generated();
+        statistics.inc_generated();
 
         SearchNode succ_node = search_space.get_node(succ_state);
+        int succ_g = node->get_g() + get_adjusted_cost(op);
+        EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
+        statistics.inc_evaluated_states();
 
-        for (Evaluator *evaluator : path_dependent_evaluators) {
-            evaluator->notify_state_transition(s, op, succ_state);
-        }
+        succ_node.open(*node, op, get_adjusted_cost(op));
+        open_list->insert(succ_eval_context, succ_state.get_id());
 
-        if (succ_node.is_new()) {
-            int succ_g = node->get_g() + get_adjusted_cost(op);
-
-            EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
-            statistics.inc_evaluated_states();
-
-            succ_node.open(*node, op, get_adjusted_cost(op));
-
-            open_list->insert(succ_eval_context, succ_state.get_id());
-
-            t = idastar_aux::step();
-
-            if (search_progress.check_progress(succ_eval_context)) {
-                statistics.print_checkpoint_line(succ_node.get_g());
-                reward_progress();
-            }
+        int succ_h = succ_eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+        int succ_f = succ_g + succ_h;
+        if (succ_f > bound) {
+            next_bound = min(next_bound, succ_f);
+        } else {
+            int status = search(succ_eval_context, succ_g, bound);
+            if (status != FAILED)
+                return status;
         }
     }
+
+    return next_bound;
 }
 
 void IDAstar_aux::reward_progress() {
