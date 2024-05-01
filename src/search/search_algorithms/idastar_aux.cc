@@ -112,7 +112,7 @@ SearchStatus IDAstar_aux::step() {
     return SOLVED;
 }
 
-int IDAstar_aux::search(std::stack<StateID> path, int g, int bound) {
+int IDAstar_aux::search(std::stack<StateID> &path, int g, int bound) {
     optional<SearchNode> node;
 
     StateID id = open_list->remove_min();

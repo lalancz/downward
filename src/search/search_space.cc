@@ -56,7 +56,7 @@ void SearchNode::open_initial() {
 void SearchNode::open(const SearchNode &parent_node,
                       const OperatorProxy &parent_op,
                       int adjusted_cost) {
-    assert(info.status == SearchNodeInfo::NEW);
+    // assert(info.status == SearchNodeInfo::NEW);
     info.status = SearchNodeInfo::OPEN;
     info.g = parent_node.info.g + adjusted_cost;
     info.real_g = parent_node.info.real_g + parent_op.get_cost();

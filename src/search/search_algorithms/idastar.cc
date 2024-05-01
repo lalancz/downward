@@ -103,7 +103,6 @@ void IDAstar::initialize() {
 
     print_initial_evaluator_values(eval_context);
 
-    pruning_method->initialize(task);
 
     if (f_evaluator) {
         int bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());

@@ -20,6 +20,7 @@ class IDAstar_aux : public SearchAlgorithm {
     const bool reopen_closed_nodes;
 
     std::unique_ptr<StateOpenList> open_list;
+    std::stack<StateID> path;
     std::shared_ptr<Evaluator> f_evaluator;
 
     std::vector<Evaluator *> path_dependent_evaluators;
@@ -35,7 +36,7 @@ class IDAstar_aux : public SearchAlgorithm {
 public:
     virtual void initialize() override;
     virtual SearchStatus step() override;
-    virtual int search(std::stack<StateID> path, int g, int bound);
+    virtual int search(std::stack<StateID> &path, int g, int bound);
     
     explicit IDAstar_aux(const plugins::Options &opts);
     virtual ~IDAstar_aux() = default;
