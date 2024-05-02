@@ -19,17 +19,13 @@ class Feature;
 
 namespace idastar {
 class IDAstar : public SearchAlgorithm {
-    const bool reopen_closed_nodes;
+    int search_bound;
 
     std::unique_ptr<StateOpenList> open_list;
-    std::stack<StateID> path;
-    std::shared_ptr<Evaluator> f_evaluator;
+    std::shared_ptr<Evaluator> evaluator;
+    std::vector<StateID> path;
 
     std::vector<Evaluator *> path_dependent_evaluators;
-    std::vector<std::shared_ptr<Evaluator>> preferred_operator_evaluators;
-    std::shared_ptr<Evaluator> lazy_evaluator;
-
-    std::shared_ptr<PruningMethod> pruning_method;
 
     void start_f_value_statistics(EvaluationContext &eval_context);
     void update_f_value_statistics(EvaluationContext &eval_context);

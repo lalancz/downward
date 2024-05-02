@@ -22,97 +22,23 @@ using namespace std;
 namespace idastar_aux {
 IDAstar_aux::IDAstar_aux(const plugins::Options &opts)
     : SearchAlgorithm(opts),
-      reopen_closed_nodes(opts.get<bool>("reopen_closed")),
-      open_list(opts.get<shared_ptr<OpenListFactory>>("open")->
-                create_state_open_list()),
-      f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)),
-      preferred_operator_evaluators(opts.get_list<shared_ptr<Evaluator>>("preferred")),
-      lazy_evaluator(opts.get<shared_ptr<Evaluator>>("lazy_evaluator", nullptr)),
-      pruning_method(opts.get<shared_ptr<PruningMethod>>("pruning")) {
-    if (lazy_evaluator && !lazy_evaluator->does_cache_estimates()) {
-        cerr << "lazy_evaluator must cache its estimates" << endl;
-        utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
-    }
+      evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)) {
 }
 
 void IDAstar_aux::initialize() {
-    log << "Conducting best first search"
-        << (reopen_closed_nodes ? " with" : " without")
-        << " reopening closed nodes, (real) bound = " << bound
-        << endl;
-    assert(open_list);
-
-    set<Evaluator *> evals;
-    open_list->get_path_dependent_evaluators(evals);
-
-    /*
-      Collect path-dependent evaluators that are used for preferred operators
-      (in case they are not also used in the open list).
-    */
-    for (const shared_ptr<Evaluator> &evaluator : preferred_operator_evaluators) {
-        evaluator->get_path_dependent_evaluators(evals);
-    }
-
-    /*
-      Collect path-dependent evaluators that are used in the f_evaluator.
-      They are usually also used in the open list and will hence already be
-      included, but we want to be sure.
-    */
-    if (f_evaluator) {
-        f_evaluator->get_path_dependent_evaluators(evals);
-    }
-
-    /*
-      Collect path-dependent evaluators that are used in the lazy_evaluator
-      (in case they are not already included).
-    */
-    if (lazy_evaluator) {
-        lazy_evaluator->get_path_dependent_evaluators(evals);
-    }
-
-    path_dependent_evaluators.assign(evals.begin(), evals.end());
-
-    State initial_state = state_registry.get_initial_state();
-    for (Evaluator *evaluator : path_dependent_evaluators) {
-        evaluator->notify_initial_state(initial_state);
-    }
-
-    /*
-      Note: we consider the initial state as reached by a preferred
-      operator.
-    */
-    EvaluationContext eval_context(initial_state, 0, true, &statistics);
-
-    statistics.inc_evaluated_states();
-
-    if (open_list->is_dead_end(eval_context)) {
-        log << "Initial state is a dead end." << endl;
-    } else {
-        if (search_progress.check_progress(eval_context))
-            statistics.print_checkpoint_line(0);
-        start_f_value_statistics(eval_context);
-        SearchNode node = search_space.get_node(initial_state);
-        node.open_initial();
-
-        open_list->insert(eval_context, initial_state.get_id());
-    }
-
-    print_initial_evaluator_values(eval_context);
-
-    pruning_method->initialize(task);
+    return;
 }
 
 void IDAstar_aux::print_statistics() const {
     statistics.print_detailed_statistics();
     search_space.print_statistics();
-    pruning_method->print_statistics();
 }
 
 SearchStatus IDAstar_aux::step() {
     return SOLVED;
 }
 
-int IDAstar_aux::search(std::stack<StateID> &path, int g, int bound) {
+int IDAstar_aux::search(std::vector<StateID> &path, int bound, OpenList<StateID> *open_list) {
     optional<SearchNode> node;
 
     StateID id = open_list->remove_min();
@@ -126,7 +52,7 @@ int IDAstar_aux::search(std::stack<StateID> &path, int g, int bound) {
     }
     
     EvaluationContext eval_context(s, node->get_g(), false, &statistics);
-    int h = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+    int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
     int f = node->get_g() + h;
 
     if (f > bound)
@@ -142,6 +68,9 @@ int IDAstar_aux::search(std::stack<StateID> &path, int g, int bound) {
         State succ_state = state_registry.get_successor_state(s, op);
         statistics.inc_generated();
 
+        if (path_contains(path, succ_state.get_id()) != -1)
+            continue;
+
         SearchNode succ_node = search_space.get_node(succ_state);
         int succ_g = node->get_g() + get_adjusted_cost(op);
         EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
@@ -149,25 +78,27 @@ int IDAstar_aux::search(std::stack<StateID> &path, int g, int bound) {
 
         succ_node.open(*node, op, get_adjusted_cost(op));
         open_list->insert(succ_eval_context, succ_state.get_id());
-        path.push(succ_state.get_id());
+        path.push_back(succ_state.get_id());
 
-        int t = search(path, succ_g, bound);
+        int t = search(path, bound, open_list);
         if (t == SOLVED) {
             return SOLVED;
         } else if (t < next_bound) {
             next_bound = t;
         }
 
-        path.pop();
+        path.pop_back();
     }
 
     return next_bound;
 }
 
-void IDAstar_aux::reward_progress() {
-    // Boost the "preferred operator" open lists somewhat whenever
-    // one of the heuristics finds a state with a new best h value.
-    open_list->boost_preferred();
+int IDAstar_aux::path_contains(std::vector<StateID> &path, StateID state) const {
+    for (size_t i = 0; i < path.size(); ++i) {
+        if (path[i] == state)
+            return i;
+    }
+    return -1;
 }
 
 void IDAstar_aux::dump_search_space() const {
@@ -175,19 +106,15 @@ void IDAstar_aux::dump_search_space() const {
 }
 
 void IDAstar_aux::start_f_value_statistics(EvaluationContext &eval_context) {
-    if (f_evaluator) {
-        int f_value = eval_context.get_evaluator_value(f_evaluator.get());
-        statistics.report_f_value_progress(f_value);
-    }
+    int h_value = eval_context.get_evaluator_value(evaluator.get());
+    statistics.report_h_value_progress(h_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IDAstar_aux::update_f_value_statistics(EvaluationContext &eval_context) {
-    if (f_evaluator) {
-        int f_value = eval_context.get_evaluator_value(f_evaluator.get());
-        statistics.report_f_value_progress(f_value);
-    }
+    int h_value = eval_context.get_evaluator_value(evaluator.get());
+    statistics.report_h_value_progress(h_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

@@ -17,26 +17,22 @@ class Feature;
 
 namespace idastar_aux {
 class IDAstar_aux : public SearchAlgorithm {
-    const bool reopen_closed_nodes;
-
-    std::unique_ptr<StateOpenList> open_list;
-    std::stack<StateID> path;
-    std::shared_ptr<Evaluator> f_evaluator;
+    std::shared_ptr<Evaluator> evaluator;
 
     std::vector<Evaluator *> path_dependent_evaluators;
-    std::vector<std::shared_ptr<Evaluator>> preferred_operator_evaluators;
-    std::shared_ptr<Evaluator> lazy_evaluator;
-
-    std::shared_ptr<PruningMethod> pruning_method;
 
     void start_f_value_statistics(EvaluationContext &eval_context);
     void update_f_value_statistics(EvaluationContext &eval_context);
-    void reward_progress();
+
 
 public:
+    std::vector<StateID> path;
+
     virtual void initialize() override;
     virtual SearchStatus step() override;
-    virtual int search(std::stack<StateID> &path, int g, int bound);
+    virtual int search(std::vector<StateID> &path, int bound, OpenList<StateID> *open_list);
+
+    virtual int path_contains(std::vector<StateID> &path, StateID state) const;
     
     explicit IDAstar_aux(const plugins::Options &opts);
     virtual ~IDAstar_aux() = default;

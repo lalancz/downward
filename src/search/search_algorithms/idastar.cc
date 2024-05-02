@@ -22,56 +22,18 @@ using namespace std;
 namespace idastar {
 IDAstar::IDAstar(const plugins::Options &opts)
     : SearchAlgorithm(opts),
-      reopen_closed_nodes(opts.get<bool>("reopen_closed")),
       open_list(opts.get<shared_ptr<OpenListFactory>>("open")->
                 create_state_open_list()),
-      f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)),
-      preferred_operator_evaluators(opts.get_list<shared_ptr<Evaluator>>("preferred")),
-      lazy_evaluator(opts.get<shared_ptr<Evaluator>>("lazy_evaluator", nullptr)),
-      pruning_method(opts.get<shared_ptr<PruningMethod>>("pruning")),
+      evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
       idastar_aux(opts) {
-    if (lazy_evaluator && !lazy_evaluator->does_cache_estimates()) {
-        cerr << "lazy_evaluator must cache its estimates" << endl;
-        utils::exit_with(utils::ExitCode::SEARCH_INPUT_ERROR);
-    }
 }
 
 void IDAstar::initialize() {
-    idastar_aux.initialize();
-
-        log << "Conducting best first search"
-        << (reopen_closed_nodes ? " with" : " without")
-        << " reopening closed nodes, (real) bound = " << bound
-        << endl;
+    log << "Conducting IDA* search" << endl;
     assert(open_list);
 
     set<Evaluator *> evals;
     open_list->get_path_dependent_evaluators(evals);
-
-    /*
-      Collect path-dependent evaluators that are used for preferred operators
-      (in case they are not also used in the open list).
-    */
-    for (const shared_ptr<Evaluator> &evaluator : preferred_operator_evaluators) {
-        evaluator->get_path_dependent_evaluators(evals);
-    }
-
-    /*
-      Collect path-dependent evaluators that are used in the f_evaluator.
-      They are usually also used in the open list and will hence already be
-      included, but we want to be sure.
-    */
-    if (f_evaluator) {
-        f_evaluator->get_path_dependent_evaluators(evals);
-    }
-
-    /*
-      Collect path-dependent evaluators that are used in the lazy_evaluator
-      (in case they are not already included).
-    */
-    if (lazy_evaluator) {
-        lazy_evaluator->get_path_dependent_evaluators(evals);
-    }
 
     path_dependent_evaluators.assign(evals.begin(), evals.end());
 
@@ -98,19 +60,13 @@ void IDAstar::initialize() {
         node.open_initial();
 
         open_list->insert(eval_context, initial_state.get_id());
-        path.push(initial_state.get_id());
+        path.push_back(initial_state.get_id());
     }
 
     print_initial_evaluator_values(eval_context);
 
 
-    if (f_evaluator) {
-        int bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
-    } else if (lazy_evaluator) {
-        int bound = eval_context.get_evaluator_value_or_infinity(lazy_evaluator.get());
-    } else {
-        int bound = 1000000;
-    }
+    search_bound = eval_context.get_evaluator_value(evaluator.get());
 }
 
 void IDAstar::print_statistics() const {
@@ -123,19 +79,16 @@ SearchStatus IDAstar::step() {
         return FAILED;
     }
 
-    log << "Bound is " << bound << endl;
-    int t = idastar_aux.search(path, 0, bound);
+    log << "Bound is " << search_bound << endl;
+    int t = idastar_aux.search(path, search_bound, open_list.get());
     if (t == SOLVED) {
-        log << "Found a solution with cost " << bound << endl;
+        check_goal_and_set_plan(state_registry.lookup_state(idastar_aux.path.back()));
         return SOLVED;
-    } else if (t == FAILED) {
-        return FAILED;
-    } else if (t == numeric_limits<int>::max()) {
-        log << "Current bound is infinity. No solution!" << endl;
+    } else if (t == FAILED || t == numeric_limits<int>::max()) {
         return FAILED;
     }
 
-    bound = t;
+    search_bound = t;
 
     return IN_PROGRESS;
 }
@@ -151,19 +104,15 @@ void IDAstar::dump_search_space() const {
 }
 
 void IDAstar::start_f_value_statistics(EvaluationContext &eval_context) {
-    if (f_evaluator) {
-        int f_value = eval_context.get_evaluator_value(f_evaluator.get());
-        statistics.report_f_value_progress(f_value);
-    }
+    int f_value = eval_context.get_evaluator_value(evaluator.get());
+    statistics.report_h_value_progress(f_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IDAstar::update_f_value_statistics(EvaluationContext &eval_context) {
-    if (f_evaluator) {
-        int f_value = eval_context.get_evaluator_value(f_evaluator.get());
-        statistics.report_f_value_progress(f_value);
-    }
+    int f_value = eval_context.get_evaluator_value(evaluator.get());
+    statistics.report_h_value_progress(f_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

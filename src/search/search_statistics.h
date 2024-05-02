@@ -28,12 +28,14 @@ class SearchStatistics {
 
     // Statistics related to f values
     int lastjump_f_value; //f value obtained in the last jump
+    int lastjump_h_value; //h value obtained in the last jump
     int lastjump_expanded_states; // same guy but at point where the last jump in the open list
     int lastjump_reopened_states; // occurred (jump == f-value of the first node in the queue increases)
     int lastjump_evaluated_states;
     int lastjump_generated_states;
 
     void print_f_line() const;
+    void print_h_line() const;
 public:
     explicit SearchStatistics(utils::LogProxy &log);
     ~SearchStatistics() = default;
@@ -72,6 +74,7 @@ public:
       performed by the open list.)
     */
     void report_f_value_progress(int f);
+    void report_h_value_progress(int h);
     void print_checkpoint_line(int g) const;
 
     // output
