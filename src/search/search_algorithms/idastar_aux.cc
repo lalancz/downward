@@ -3,7 +3,6 @@
 #include "../evaluation_context.h"
 #include "../evaluator.h"
 #include "../open_list_factory.h"
-#include "../pruning_method.h"
 
 #include "../algorithms/ordered_set.h"
 #include "../plugins/options.h"
@@ -22,11 +21,46 @@ using namespace std;
 namespace idastar_aux {
 IDAstar_aux::IDAstar_aux(const plugins::Options &opts)
     : SearchAlgorithm(opts),
-      evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)) {
+        open_list(opts.get<shared_ptr<OpenListFactory>>("open")->create_state_open_list()),
+        evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)) {
 }
 
 void IDAstar_aux::initialize() {
-    return;
+    log << "Conducting IDA* search" << endl;
+    assert(open_list);
+
+    set<Evaluator *> evals;
+    open_list->get_path_dependent_evaluators(evals);
+
+    path_dependent_evaluators.assign(evals.begin(), evals.end());
+
+    State initial_state = state_registry.get_initial_state();
+    for (Evaluator *evaluator : path_dependent_evaluators) {
+        evaluator->notify_initial_state(initial_state);
+    }
+
+    /*
+      Note: we consider the initial state as reached by a preferred
+      operator.
+    */
+    EvaluationContext eval_context(initial_state, 0, true, &statistics);
+
+    statistics.inc_evaluated_states();
+
+    if (open_list->is_dead_end(eval_context)) {
+        log << "Initial state is a dead end." << endl;
+    } else {
+        if (search_progress.check_progress(eval_context))
+            statistics.print_checkpoint_line(0);
+        start_f_value_statistics(eval_context);
+        SearchNode node = search_space.get_node(initial_state);
+        node.open_initial();
+
+        open_list->insert(eval_context, initial_state.get_id());
+        path.push_back(initial_state.get_id());
+    }
+
+    print_initial_evaluator_values(eval_context);
 }
 
 void IDAstar_aux::print_statistics() const {
@@ -38,7 +72,11 @@ SearchStatus IDAstar_aux::step() {
     return SOLVED;
 }
 
-int IDAstar_aux::search(std::vector<StateID> &path, int bound, OpenList<StateID> *open_list) {
+int IDAstar_aux::search(std::vector<StateID> &path, int bound) {
+    if (open_list->empty()) {
+        return AUX_FAILED;
+    }
+
     optional<SearchNode> node;
 
     StateID id = open_list->remove_min();
@@ -48,12 +86,12 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, OpenList<StateID>
     if (check_goal_and_set_plan(s)){
         std::cout << "Found a solution with cost " << node->get_g() << endl;
     
-        return SOLVED;
+        return AUX_SOLVED;
     }
     
     EvaluationContext eval_context(s, node->get_g(), false, &statistics);
     int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    int f = node->get_g() + h;
+    int f = h + node->get_g();
 
     if (f > bound)
         return f;
@@ -68,7 +106,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, OpenList<StateID>
         State succ_state = state_registry.get_successor_state(s, op);
         statistics.inc_generated();
 
-        if (path_contains(path, succ_state.get_id()) != -1)
+        if (path_contains(path, succ_state.get_id()))
             continue;
 
         SearchNode succ_node = search_space.get_node(succ_state);
@@ -80,9 +118,9 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, OpenList<StateID>
         open_list->insert(succ_eval_context, succ_state.get_id());
         path.push_back(succ_state.get_id());
 
-        int t = search(path, bound, open_list);
-        if (t == SOLVED) {
-            return SOLVED;
+        int t = search(path, bound);
+        if (t == AUX_SOLVED) {
+            return AUX_SOLVED;
         } else if (t < next_bound) {
             next_bound = t;
         }
@@ -93,12 +131,12 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, OpenList<StateID>
     return next_bound;
 }
 
-int IDAstar_aux::path_contains(std::vector<StateID> &path, StateID state) const {
+bool IDAstar_aux::path_contains(std::vector<StateID> &path, StateID state) const {
     for (size_t i = 0; i < path.size(); ++i) {
         if (path[i] == state)
-            return i;
+            return false;
     }
-    return -1;
+    return true;
 }
 
 void IDAstar_aux::dump_search_space() const {
@@ -106,19 +144,18 @@ void IDAstar_aux::dump_search_space() const {
 }
 
 void IDAstar_aux::start_f_value_statistics(EvaluationContext &eval_context) {
-    int h_value = eval_context.get_evaluator_value(evaluator.get());
+    int h_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
     statistics.report_h_value_progress(h_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IDAstar_aux::update_f_value_statistics(EvaluationContext &eval_context) {
-    int h_value = eval_context.get_evaluator_value(evaluator.get());
+    int h_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
     statistics.report_h_value_progress(h_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {
-    SearchAlgorithm::add_pruning_option(feature);
     SearchAlgorithm::add_options_to_feature(feature);
 }
 }

@@ -5,21 +5,28 @@
 #include "../search_algorithm.h"
 
 #include "idastar_aux.h"
+#include "../plugins/options.h"
 
 #include <memory>
 #include <vector>
 #include <stack>
 
 class Evaluator;
-class PruningMethod;
 
 namespace plugins {
 class Feature;
 }
 
+enum class AuxSearchStatus {
+    AUX_FAILED = -1,
+    AUX_SOLVED = -2,
+    AUX_IN_PROGRESS = -3
+};
+
 namespace idastar {
 class IDAstar : public SearchAlgorithm {
     int search_bound;
+    const plugins::Options opts;
 
     std::unique_ptr<StateOpenList> open_list;
     std::shared_ptr<Evaluator> evaluator;
@@ -30,8 +37,6 @@ class IDAstar : public SearchAlgorithm {
     void start_f_value_statistics(EvaluationContext &eval_context);
     void update_f_value_statistics(EvaluationContext &eval_context);
     void reward_progress();
-
-    idastar_aux::IDAstar_aux idastar_aux;
 
 protected:
     virtual void initialize() override;

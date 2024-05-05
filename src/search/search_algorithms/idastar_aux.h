@@ -9,7 +9,6 @@
 #include <stack>
 
 class Evaluator;
-class PruningMethod;
 
 namespace plugins {
 class Feature;
@@ -17,6 +16,7 @@ class Feature;
 
 namespace idastar_aux {
 class IDAstar_aux : public SearchAlgorithm {
+    std::unique_ptr<StateOpenList> open_list;
     std::shared_ptr<Evaluator> evaluator;
 
     std::vector<Evaluator *> path_dependent_evaluators;
@@ -30,9 +30,9 @@ public:
 
     virtual void initialize() override;
     virtual SearchStatus step() override;
-    virtual int search(std::vector<StateID> &path, int bound, OpenList<StateID> *open_list);
+    virtual int search(std::vector<StateID> &path, int bound);
 
-    virtual int path_contains(std::vector<StateID> &path, StateID state) const;
+    virtual bool path_contains(std::vector<StateID> &path, StateID state) const;
     
     explicit IDAstar_aux(const plugins::Options &opts);
     virtual ~IDAstar_aux() = default;
