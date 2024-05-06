@@ -74,14 +74,15 @@ SearchStatus IDAstar_aux::step() {
     return SOLVED;
 }
 
-int IDAstar_aux::search(std::vector<StateID> &path, int bound) {
+int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan) {
     optional<SearchNode> node;
 
     StateID id = path.back();
     State state = state_registry.lookup_state(id);
     node.emplace(search_space.get_node(state));
     const State &s = node->get_state();
-    if (task_properties::is_goal_state(task_proxy, state)){    
+    if (task_properties::is_goal_state(task_proxy, state)){
+        search_space.trace_path(state, plan);
         return idastar::AUX_SOLVED;
     }
     
@@ -115,7 +116,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound) {
         succ_node.open(*node, op, get_adjusted_cost(op));
         path.push_back(succ_state.get_id());
 
-        int t = search(path, bound);
+        int t = search(path, bound, plan);
         if (t == idastar::AUX_SOLVED) {
             return idastar::AUX_SOLVED;
         } else if (t < next_bound) {

@@ -39,20 +39,15 @@ void IDAstar::print_statistics() const {
 }
 
 SearchStatus IDAstar::step() {
-
+    Plan plan;
 
     idastar_aux::IDAstar_aux idastar_aux = idastar_aux::IDAstar_aux(opts);
     idastar_aux.initialize();
     
-    log << "Bound is " << search_bound << endl;
-    int t = idastar_aux.search(path, search_bound);
+    log << "The current bound is " << search_bound << endl;
+    int t = idastar_aux.search(path, search_bound, plan);
     if (t == AUX_SOLVED) {
-        optional<SearchNode> node;
-        StateID id = path.back();
-        State state = state_registry.lookup_state(id);
-        node.emplace(search_space.get_node(state));
-        const State &s = node->get_state();
-        check_goal_and_set_plan(s);
+        set_plan(plan);
         return SOLVED;
     } else if (t == AUX_FAILED || t == numeric_limits<int>::max()) {
         return FAILED;

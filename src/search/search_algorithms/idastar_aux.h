@@ -30,7 +30,7 @@ public:
 
     virtual void initialize() override;
     virtual SearchStatus step() override;
-    virtual int search(std::vector<StateID> &path, int bound);
+    virtual int search(std::vector<StateID> &path, int bound, Plan &plan);
 
     virtual bool path_contains(std::vector<StateID> &path, StateID state) const;
     
