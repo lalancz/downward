@@ -1,3 +1,4 @@
+#include "idastar.h"
 #include "idastar_aux.h"
 
 #include "../evaluation_context.h"
@@ -7,6 +8,7 @@
 #include "../algorithms/ordered_set.h"
 #include "../plugins/options.h"
 #include "../task_utils/successor_generator.h"
+#include "../task_utils/task_properties.h"
 #include "../utils/logging.h"
 
 #include <cassert>
@@ -73,20 +75,14 @@ SearchStatus IDAstar_aux::step() {
 }
 
 int IDAstar_aux::search(std::vector<StateID> &path, int bound) {
-    if (open_list->empty()) {
-        return AUX_FAILED;
-    }
-
     optional<SearchNode> node;
 
-    StateID id = open_list->remove_min();
+    StateID id = path.back();
     State state = state_registry.lookup_state(id);
     node.emplace(search_space.get_node(state));
     const State &s = node->get_state();
-    if (check_goal_and_set_plan(s)){
-        std::cout << "Found a solution with cost " << node->get_g() << endl;
-    
-        return AUX_SOLVED;
+    if (task_properties::is_goal_state(task_proxy, state)){    
+        return idastar::AUX_SOLVED;
     }
     
     EvaluationContext eval_context(s, node->get_g(), false, &statistics);
@@ -101,26 +97,27 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound) {
 
     int next_bound = numeric_limits<int>::max();
     for (OperatorID op_id : applicable_ops) {
+        
         OperatorProxy op = task_proxy.get_operators()[op_id];
 
         State succ_state = state_registry.get_successor_state(s, op);
         statistics.inc_generated();
 
-        if (path_contains(path, succ_state.get_id()))
-            continue;
 
+        if (path_contains(path, succ_state.get_id()))
+            continue; 
+            
         SearchNode succ_node = search_space.get_node(succ_state);
         int succ_g = node->get_g() + get_adjusted_cost(op);
         EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
         statistics.inc_evaluated_states();
 
         succ_node.open(*node, op, get_adjusted_cost(op));
-        open_list->insert(succ_eval_context, succ_state.get_id());
         path.push_back(succ_state.get_id());
 
         int t = search(path, bound);
-        if (t == AUX_SOLVED) {
-            return AUX_SOLVED;
+        if (t == idastar::AUX_SOLVED) {
+            return idastar::AUX_SOLVED;
         } else if (t < next_bound) {
             next_bound = t;
         }
@@ -134,9 +131,9 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound) {
 bool IDAstar_aux::path_contains(std::vector<StateID> &path, StateID state) const {
     for (size_t i = 0; i < path.size(); ++i) {
         if (path[i] == state)
-            return false;
+            return true;
     }
-    return true;
+    return false;
 }
 
 void IDAstar_aux::dump_search_space() const {

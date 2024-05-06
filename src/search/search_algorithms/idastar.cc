@@ -27,6 +27,7 @@ IDAstar::IDAstar(const plugins::Options &opts)
 
 void IDAstar::initialize() {
     State initial_state = state_registry.get_initial_state();
+    path.push_back(initial_state.get_id());
 
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
 
@@ -45,11 +46,15 @@ SearchStatus IDAstar::step() {
     
     log << "Bound is " << search_bound << endl;
     int t = idastar_aux.search(path, search_bound);
-    if (t == SOLVED) {
-        check_goal_and_set_plan(state_registry.lookup_state(idastar_aux.path.back()));
+    if (t == AUX_SOLVED) {
+        optional<SearchNode> node;
+        StateID id = path.back();
+        State state = state_registry.lookup_state(id);
+        node.emplace(search_space.get_node(state));
+        const State &s = node->get_state();
+        check_goal_and_set_plan(s);
         return SOLVED;
-    } else if (t == FAILED || t == numeric_limits<int>::max()) {
-        log << "Test" << endl;
+    } else if (t == AUX_FAILED || t == numeric_limits<int>::max()) {
         return FAILED;
     }
 

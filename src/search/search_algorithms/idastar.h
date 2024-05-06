@@ -17,13 +17,14 @@ namespace plugins {
 class Feature;
 }
 
-enum class AuxSearchStatus {
+namespace idastar {
+
+enum AuxSearchStatus {
     AUX_FAILED = -1,
     AUX_SOLVED = -2,
     AUX_IN_PROGRESS = -3
 };
 
-namespace idastar {
 class IDAstar : public SearchAlgorithm {
     int search_bound;
     const plugins::Options opts;
