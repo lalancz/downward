@@ -409,6 +409,24 @@ fast_downward_plugin(
     DEPENDS IDASTAR SEARCH_COMMON
 )
 
+
+fast_downward_plugin(
+    NAME IBEX
+    HELP "Iterative budgeted exponential search"
+    SOURCES
+        search_algorithms/ibex
+    DEPENDS IBEX SEARCH_COMMON LAZYSEARCH
+    DEPENDECY_ONLY
+)
+
+fast_downward_plugin(
+    NAME PLUGIN_IBEX
+    HELP "Iterative budgeted exponential search"
+    SOURCES
+        search_algorithms/plugin_ibex
+    DEPENDS IBEX SEARCH_COMMON
+)
+
 fast_downward_plugin(
     NAME EAGER_SEARCH
     HELP "Eager search"
