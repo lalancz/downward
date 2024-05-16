@@ -32,7 +32,7 @@ class IBEX : public SearchAlgorithm {
     void update_f_value_statistics(EvaluationContext &eval_context);
     void reward_progress();
 
-    std::pair<int, int> interval_union(std::pair<int, int> i1, std::pair<int, int> i2);
+    std::pair<int, int> interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2);
     std::pair<int, int> search(int costLimit, int nodeLimit);
     void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit);
 
