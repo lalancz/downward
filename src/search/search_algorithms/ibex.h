@@ -32,11 +32,30 @@ class IBEX : public SearchAlgorithm {
     void update_f_value_statistics(EvaluationContext &eval_context);
     void reward_progress();
 
+    std::pair<int, int> interval_union(std::pair<int, int> i1, std::pair<int, int> i2);
+    std::pair<int, int> search(int costLimit, int nodeLimit);
+    void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit);
+
 protected:
     virtual void initialize() override;
     virtual SearchStatus step() override;
 
 public:
+    Plan solutionPath;
+    int solutionCost;
+    int solutionLowerBound;
+
+    int budget;
+    int nodes;
+
+    int c_1;
+    int c_2;
+
+    int f_below;
+    int f_above;
+
+    std::pair<int, int> i;
+
     explicit IBEX(const plugins::Options &opts);
     virtual ~IBEX() = default;
 

@@ -8,6 +8,7 @@
 #include "../algorithms/ordered_set.h"
 #include "../plugins/options.h"
 #include "../task_utils/successor_generator.h"
+#include "../task_utils/task_properties.h"
 #include "../utils/logging.h"
 
 #include <cassert>
@@ -16,6 +17,7 @@
 #include <optional>
 #include <set>
 #include <stack>
+#include <math.h>
 
 using namespace std;
 
@@ -28,35 +30,141 @@ IBEX::IBEX(const plugins::Options &opts)
 
 void IBEX::initialize() {
     State initial_state = state_registry.get_initial_state();
+
+    SearchNode node = search_space.get_node(initial_state);
+    node.open_initial();
+
     path.push_back(initial_state.get_id());
 
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
 
-    search_bound = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    solutionCost = numeric_limits<int>::max();
+    budget = 0;
+    i = make_pair(eval_context.get_evaluator_value_or_infinity(evaluator.get()), numeric_limits<int>::max());
+
+    // temp, should be a parameter
+    c_1 = 2;
+    c_2 = 8;
 }
 
 void IBEX::print_statistics() const {
     return;
 }
 
-SearchStatus IBEX::step() {
-    Plan plan;
+std::pair<int, int> IBEX::interval_union(std::pair<int, int> i1, std::pair<int, int> i2) {
+    return make_pair(min(i1.first, i2.first), max(i1.second, i2.second));
+}
 
-    idastar_aux::IDAstar_aux idastar_aux = idastar_aux::IDAstar_aux(opts);
-    idastar_aux.initialize();
+SearchStatus IBEX::step() {
+    log << "The current bound is " << solutionCost << endl;
+    log << "The current interval is [" << i.first << ", " << i.second << "]" << endl;
+
+    while (solutionCost > i.first) {
+        log << "Solution cost " << solutionCost << " is greater than i.first " << i.first << endl;
+        solutionLowerBound = i.first;
+        i.second = numeric_limits<int>::max();
+
+        i = interval_union(i, search(i.first, numeric_limits<int>::max()));
+        if (nodes >= c_1 * budget) {
+            budget = nodes;
+            continue;
+        }
+
+        int delta = 0;
+        int nextCost;
+        while ((i.second != i.first) && (nodes < c_1 * budget)) {
+            nextCost = i.first + pow(2, delta); 
+            delta++;
+            solutionLowerBound = i.first;
+            i = interval_union(i, search(nextCost, c_2 * budget));
+        }
+
+        while ((i.second != i.first) && !((c_1 * budget <= nodes) && (nodes < c_2 * budget))) {
+            nextCost = (i.first + i.second) / 2;
+            solutionLowerBound = i.first;
+            i = interval_union(i, search(nextCost, c_2 * budget));
+        }
+
+        budget = max(nodes, c_1 * budget);
+
+        if (solutionCost == i.first) {
+            log << "Solution found with cost " << solutionCost << endl;
+            set_plan(solutionPath);
+            return SOLVED;
+        }
+    }
     
-    log << "The current bound is " << search_bound << endl;
-    int t = idastar_aux.search(path, search_bound, plan);
-    if (t == SOLVED) {
-        set_plan(plan);
-        return SOLVED;
-    } else if (t == FAILED || t == numeric_limits<int>::max()) {
-        return FAILED;
+    return FAILED;
+}
+
+std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
+    int f_below = 0;
+    int f_above = numeric_limits<int>::max();
+    nodes = 0;
+
+    State initial_state = state_registry.get_initial_state();
+    limitedDFS(initial_state, 0, costLimit, nodeLimit);
+
+    if (nodes >= nodeLimit) {
+        return make_pair(0, f_below);
+    } else if (f_below >= solutionCost) {
+        return make_pair(solutionCost, solutionCost);
+    } else {
+        return make_pair(f_above, numeric_limits<int>::max());
+    }
+}
+
+void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit) {
+    optional<SearchNode> node;
+    node.emplace(search_space.get_node(currState));
+
+    EvaluationContext eval_context(currState, pathCost, true, &statistics);
+    int currF = pathCost + eval_context.get_evaluator_value_or_infinity(evaluator.get());
+
+    if (solutionCost == solutionLowerBound) {
+        return;
+    } else if (currF > costLimit) {
+        f_above = min(f_above, currF);
+        return;
+    } else if (currF >= solutionCost) {
+        f_below = solutionCost;
+        return;
+    } else {
+        f_below = max(currF, f_below);
     }
 
-    search_bound = t;
+    if (nodes >= nodeLimit) {
+        return;
+    }
 
-    return IN_PROGRESS;
+    if (task_properties::is_goal_state(task_proxy, currState)) {
+        search_space.trace_path(currState, solutionPath);
+        solutionCost = currF;
+        log << "Solution found with costtt " << solutionCost << endl;
+        return;
+    }
+
+    vector<OperatorID> applicable_ops;
+    successor_generator.generate_applicable_ops(currState, applicable_ops);
+
+    nodes++;
+
+    log << "test" << endl;
+
+    for (OperatorID op_id : applicable_ops) {
+        OperatorProxy op = task_proxy.get_operators()[op_id];
+        State succ_state = state_registry.get_successor_state(currState, op);
+        statistics.inc_generated();
+
+        SearchNode succ_node = search_space.get_node(succ_state);
+        int succ_g = node->get_g() + get_adjusted_cost(op);
+        EvaluationContext succ_eval_context(succ_state, succ_g, true, &statistics);
+        statistics.inc_evaluated_states();
+
+        // succ_node.open(*node, op, get_adjusted_cost(op));
+
+        limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
+    }
 }
 
 void IBEX::reward_progress() {
