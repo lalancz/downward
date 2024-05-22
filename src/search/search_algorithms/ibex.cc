@@ -51,8 +51,8 @@ void IBEX::print_statistics() const {
     return;
 }
 
-std::pair<int, int> IBEX::interval_union(std::pair<int, int> i1, std::pair<int, int> i2) {
-    return make_pair(min(i1.first, i2.first), max(i1.second, i2.second));
+std::pair<int, int> IBEX::interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2) {
+    return make_pair(max(i1.first, i2.first), min(i1.second, i2.second));
 }
 
 SearchStatus IBEX::step() {
@@ -64,7 +64,7 @@ SearchStatus IBEX::step() {
         solutionLowerBound = i.first;
         i.second = numeric_limits<int>::max();
 
-        i = interval_union(i, search(i.first, numeric_limits<int>::max()));
+        i = interval_intersection(i, search(i.first, numeric_limits<int>::max()));
         if (nodes >= c_1 * budget) {
             budget = nodes;
             continue;
@@ -76,13 +76,13 @@ SearchStatus IBEX::step() {
             nextCost = i.first + pow(2, delta); 
             delta++;
             solutionLowerBound = i.first;
-            i = interval_union(i, search(nextCost, c_2 * budget));
+            i = interval_intersection(i, search(nextCost, c_2 * budget));
         }
 
         while ((i.second != i.first) && !((c_1 * budget <= nodes) && (nodes < c_2 * budget))) {
             nextCost = (i.first + i.second) / 2;
             solutionLowerBound = i.first;
-            i = interval_union(i, search(nextCost, c_2 * budget));
+            i = interval_intersection(i, search(nextCost, c_2 * budget));
         }
 
         budget = max(nodes, c_1 * budget);
@@ -161,7 +161,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         EvaluationContext succ_eval_context(succ_state, succ_g, true, &statistics);
         statistics.inc_evaluated_states();
 
-        // succ_node.open(*node, op, get_adjusted_cost(op));
+        succ_node.open(*node, op, get_adjusted_cost(op));
 
         limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
     }
