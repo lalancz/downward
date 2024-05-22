@@ -32,6 +32,8 @@ void IDAstar::initialize() {
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
 
     search_bound = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+
+    print_initial_evaluator_values(eval_context);
 }
 
 void IDAstar::print_statistics() const {

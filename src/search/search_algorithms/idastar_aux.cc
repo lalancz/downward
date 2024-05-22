@@ -61,8 +61,6 @@ void IDAstar_aux::initialize() {
         open_list->insert(eval_context, initial_state.get_id());
         path.push_back(initial_state.get_id());
     }
-
-    print_initial_evaluator_values(eval_context);
 }
 
 void IDAstar_aux::print_statistics() const {
