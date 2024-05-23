@@ -29,17 +29,17 @@ IDAstar_aux::IDAstar_aux(const plugins::Options &opts)
 
 void IDAstar_aux::initialize() {
     log << "Conducting IDA* search" << endl;
-    assert(open_list);
+    // assert(open_list);
 
-    set<Evaluator *> evals;
-    open_list->get_path_dependent_evaluators(evals);
+    // set<Evaluator *> evals;
+    // open_list->get_path_dependent_evaluators(evals);
 
-    path_dependent_evaluators.assign(evals.begin(), evals.end());
+    // path_dependent_evaluators.assign(evals.begin(), evals.end());
 
     State initial_state = state_registry.get_initial_state();
-    for (Evaluator *evaluator : path_dependent_evaluators) {
-        evaluator->notify_initial_state(initial_state);
-    }
+    // for (Evaluator *evaluator : path_dependent_evaluators) {
+    //     evaluator->notify_initial_state(initial_state);
+    // }
 
     /*
       Note: we consider the initial state as reached by a preferred
@@ -47,19 +47,19 @@ void IDAstar_aux::initialize() {
     */
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
 
-    statistics.inc_evaluated_states();
+    // statistics.inc_evaluated_states();
 
     if (open_list->is_dead_end(eval_context)) {
         log << "Initial state is a dead end." << endl;
     } else {
-        if (search_progress.check_progress(eval_context))
-            statistics.print_checkpoint_line(0);
-        start_f_value_statistics(eval_context);
+        // if (search_progress.check_progress(eval_context))
+            // statistics.print_checkpoint_line(0);
+        // start_f_value_statistics(eval_context);
         SearchNode node = search_space.get_node(initial_state);
         node.open_initial();
 
-        open_list->insert(eval_context, initial_state.get_id());
-        path.push_back(initial_state.get_id());
+        // open_list->insert(eval_context, initial_state.get_id());
+        // path.push_back(initial_state.get_id());
     }
 }
 
@@ -72,7 +72,7 @@ SearchStatus IDAstar_aux::step() {
     return SOLVED;
 }
 
-int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan) {
+int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, SearchStatistics &idastar_statistics) {
     optional<SearchNode> node;
 
     StateID id = path.back();
@@ -84,7 +84,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan) {
         return idastar::AUX_SOLVED;
     }
     
-    EvaluationContext eval_context(s, node->get_g(), false, &statistics);
+    EvaluationContext eval_context(s, node->get_g(), false, &idastar_statistics);
     int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
     int f = h + node->get_g();
 
@@ -100,7 +100,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
 
         State succ_state = state_registry.get_successor_state(s, op);
-        statistics.inc_generated();
+        idastar_statistics.inc_generated();
 
 
         if (path_contains(path, succ_state.get_id()))
@@ -108,13 +108,21 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan) {
             
         SearchNode succ_node = search_space.get_node(succ_state);
         int succ_g = node->get_g() + get_adjusted_cost(op);
-        EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
-        statistics.inc_evaluated_states();
+        EvaluationContext succ_eval_context(succ_state, succ_g, false, &idastar_statistics);
+        idastar_statistics.inc_evaluated_states();
+
+        update_f_value_statistics(succ_eval_context, idastar_statistics);
+
+        if (search_progress.check_progress(succ_eval_context)) {
+            idastar_statistics.print_checkpoint_line(succ_g);
+        }
 
         succ_node.open(*node, op, get_adjusted_cost(op));
+        idastar_statistics.inc_expanded();
+
         path.push_back(succ_state.get_id());
 
-        int t = search(path, bound, plan);
+        int t = search(path, bound, plan, idastar_statistics);
         if (t == idastar::AUX_SOLVED) {
             return idastar::AUX_SOLVED;
         } else if (t < next_bound) {
@@ -146,9 +154,9 @@ void IDAstar_aux::start_f_value_statistics(EvaluationContext &eval_context) {
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
-void IDAstar_aux::update_f_value_statistics(EvaluationContext &eval_context) {
+void IDAstar_aux::update_f_value_statistics(EvaluationContext &eval_context, SearchStatistics &idastar_statistics) {
     int h_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    statistics.report_h_value_progress(h_value);
+    idastar_statistics.report_h_value_progress(h_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

@@ -31,13 +31,18 @@ void IDAstar::initialize() {
 
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
 
+    if (search_progress.check_progress(eval_context))
+        statistics.print_checkpoint_line(0);
+    start_f_value_statistics(eval_context);
+
     search_bound = eval_context.get_evaluator_value_or_infinity(evaluator.get());
 
     print_initial_evaluator_values(eval_context);
 }
 
 void IDAstar::print_statistics() const {
-    return;
+    statistics.print_detailed_statistics();
+    search_space.print_statistics();
 }
 
 SearchStatus IDAstar::step() {
@@ -47,7 +52,7 @@ SearchStatus IDAstar::step() {
     idastar_aux.initialize();
     
     log << "The current bound is " << search_bound << endl;
-    int t = idastar_aux.search(path, search_bound, plan);
+    int t = idastar_aux.search(path, search_bound, plan, statistics);
     if (t == AUX_SOLVED) {
         set_plan(plan);
         return SOLVED;

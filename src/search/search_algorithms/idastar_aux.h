@@ -22,7 +22,7 @@ class IDAstar_aux : public SearchAlgorithm {
     std::vector<Evaluator *> path_dependent_evaluators;
 
     void start_f_value_statistics(EvaluationContext &eval_context);
-    void update_f_value_statistics(EvaluationContext &eval_context);
+    void update_f_value_statistics(EvaluationContext &eval_context, SearchStatistics &idastar_statistics);
 
 
 public:
@@ -30,7 +30,7 @@ public:
 
     virtual void initialize() override;
     virtual SearchStatus step() override;
-    virtual int search(std::vector<StateID> &path, int bound, Plan &plan);
+    virtual int search(std::vector<StateID> &path, int bound, Plan &plan, SearchStatistics &idastar_statistics);
 
     virtual bool path_contains(std::vector<StateID> &path, StateID state) const;
     
