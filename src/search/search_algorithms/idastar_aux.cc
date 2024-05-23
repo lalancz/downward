@@ -79,17 +79,18 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
     State state = state_registry.lookup_state(id);
     node.emplace(search_space.get_node(state));
     const State &s = node->get_state();
-    if (task_properties::is_goal_state(task_proxy, state)){
-        search_space.trace_path(state, plan);
-        return idastar::AUX_SOLVED;
-    }
-    
+
     EvaluationContext eval_context(s, node->get_g(), false, &idastar_statistics);
     int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
     int f = h + node->get_g();
 
     if (f > bound)
         return f;
+
+    if (task_properties::is_goal_state(task_proxy, state)){
+        search_space.trace_path(state, plan);
+        return idastar::AUX_SOLVED;
+    }
 
     vector<OperatorID> applicable_ops;
     successor_generator.generate_applicable_ops(s, applicable_ops);
@@ -108,7 +109,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
             
         SearchNode succ_node = search_space.get_node(succ_state);
         int succ_g = node->get_g() + get_adjusted_cost(op);
-        EvaluationContext succ_eval_context(succ_state, succ_g, false, &idastar_statistics);
+        EvaluationContext succ_eval_context(succ_state, succ_g, true, &idastar_statistics);
         idastar_statistics.inc_evaluated_states();
 
         update_f_value_statistics(succ_eval_context, idastar_statistics);
