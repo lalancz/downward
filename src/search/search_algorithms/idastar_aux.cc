@@ -82,7 +82,12 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
 
     EvaluationContext eval_context(s, node->get_g(), false, &idastar_statistics);
     int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    int f = h + node->get_g();
+    int f;
+    if (h == EvaluationResult::INFTY) {
+        f = h;
+    } else {
+        f = h + node->get_g();
+    }
 
     if (f > bound)
         return f;
@@ -112,7 +117,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
         EvaluationContext succ_eval_context(succ_state, succ_g, true, &idastar_statistics);
         idastar_statistics.inc_evaluated_states();
 
-        update_f_value_statistics(succ_eval_context, idastar_statistics);
+        //update_f_value_statistics(succ_eval_context, idastar_statistics);
 
         if (search_progress.check_progress(succ_eval_context)) {
             idastar_statistics.print_checkpoint_line(succ_g);
