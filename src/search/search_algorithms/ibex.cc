@@ -119,7 +119,13 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     node.emplace(search_space.get_node(currState));
 
     EvaluationContext eval_context(currState, pathCost, true, &statistics);
-    int currF = pathCost + eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int currF;
+    if (h == EvaluationResult::INFTY) {
+        currF = h;
+    } else {
+        currF = h + pathCost;
+    }
 
     if (solutionCost == solutionLowerBound) {
         return;
