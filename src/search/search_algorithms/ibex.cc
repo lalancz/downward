@@ -52,6 +52,10 @@ void IBEX::print_statistics() const {
 }
 
 std::pair<int, int> IBEX::interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2) {
+    if (i1.first > i2.second || i2.first > i1.second) {
+        return make_pair(0, 0);
+    }
+
     return make_pair(max(i1.first, i2.first), min(i1.second, i2.second));
 }
 
