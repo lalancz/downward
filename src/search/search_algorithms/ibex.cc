@@ -64,7 +64,6 @@ SearchStatus IBEX::step() {
     log << "The current interval is [" << i.first << ", " << i.second << "]" << endl;
 
     while (solutionCost > i.first) {
-        log << "Solution cost " << solutionCost << " is greater than i.first " << i.first << endl;
         solutionLowerBound = i.first;
         i.second = numeric_limits<int>::max();
 
@@ -149,7 +148,6 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         solutionPath.clear();
         search_space.trace_path(currState, solutionPath);
         solutionCost = currF;
-        log << "Solution found with costtt " << solutionCost << endl;
         return;
     }
 
@@ -157,8 +155,6 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     successor_generator.generate_applicable_ops(currState, applicable_ops);
 
     nodes++;
-
-    log << "test" << endl;
 
     for (OperatorID op_id : applicable_ops) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
