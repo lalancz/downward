@@ -95,7 +95,7 @@ SearchStatus IBEX::step() {
             return SOLVED;
         }
     }
-    
+
     if (solutionCost == i.first) {
         log << "Solution found with cost " << solutionCost << endl;
         set_plan(solutionPath);
@@ -174,20 +174,10 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         statistics.inc_evaluated_states();
 
         if (succ_node.is_new())
-        succ_node.open(*node, op, get_adjusted_cost(op));
+            succ_node.open(*node, op, get_adjusted_cost(op));
 
         limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
     }
-}
-
-void IBEX::reward_progress() {
-    // Boost the "preferred operator" open lists somewhat whenever
-    // one of the heuristics finds a state with a new best h value.
-    open_list->boost_preferred();
-}
-
-void IBEX::dump_search_space() const {
-    search_space.dump(task_proxy);
 }
 
 void IBEX::start_f_value_statistics(EvaluationContext &eval_context) {
