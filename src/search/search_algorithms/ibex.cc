@@ -70,6 +70,7 @@ SearchStatus IBEX::step() {
         i = interval_intersection(i, search(i.first, numeric_limits<int>::max()));
         if (nodes >= c_1 * budget)
             budget = nodes;
+            continue;
 
         int delta = 0;
         int nextCost;
@@ -93,6 +94,12 @@ SearchStatus IBEX::step() {
             set_plan(solutionPath);
             return SOLVED;
         }
+    }
+    
+    if (solutionCost == i.first) {
+        log << "Solution found with cost " << solutionCost << endl;
+        set_plan(solutionPath);
+        return SOLVED;
     }
     
     return FAILED;
