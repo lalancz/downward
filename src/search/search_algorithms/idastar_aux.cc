@@ -24,7 +24,7 @@ namespace idastar_aux {
 IDAstar_aux::IDAstar_aux(const plugins::Options &opts)
     : SearchAlgorithm(opts),
         open_list(opts.get<shared_ptr<OpenListFactory>>("open")->create_state_open_list()),
-        evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)) {
+        f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)) {
 }
 
 void IDAstar_aux::initialize() {
@@ -81,13 +81,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
     const State &s = node->get_state();
 
     EvaluationContext eval_context(s, node->get_g(), false, &idastar_statistics);
-    int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    int f;
-    if (h == EvaluationResult::INFTY) {
-        f = h;
-    } else {
-        f = h + node->get_g();
-    }
+    int f = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
 
     if (f > bound)
         return f;
@@ -149,19 +143,15 @@ bool IDAstar_aux::path_contains(std::vector<StateID> &path, StateID state) const
     return false;
 }
 
-void IDAstar_aux::dump_search_space() const {
-    search_space.dump(task_proxy);
-}
-
 void IDAstar_aux::start_f_value_statistics(EvaluationContext &eval_context) {
-    int h_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int h_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     statistics.report_h_value_progress(h_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IDAstar_aux::update_f_value_statistics(EvaluationContext &eval_context, SearchStatistics &idastar_statistics) {
-    int h_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int h_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     idastar_statistics.report_h_value_progress(h_value);
 }
 

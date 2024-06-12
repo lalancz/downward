@@ -21,7 +21,7 @@ using namespace std;
 namespace idastar {
 IDAstar::IDAstar(const plugins::Options &opts)
     : SearchAlgorithm(opts),
-      evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
+      f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)),
       opts(opts) {
 }
 
@@ -35,7 +35,7 @@ void IDAstar::initialize() {
         statistics.print_checkpoint_line(0);
     start_f_value_statistics(eval_context);
 
-    search_bound = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    search_bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
 
     print_initial_evaluator_values(eval_context);
 }
@@ -65,25 +65,15 @@ SearchStatus IDAstar::step() {
     return IN_PROGRESS;
 }
 
-void IDAstar::reward_progress() {
-    // Boost the "preferred operator" open lists somewhat whenever
-    // one of the heuristics finds a state with a new best h value.
-    open_list->boost_preferred();
-}
-
-void IDAstar::dump_search_space() const {
-    search_space.dump(task_proxy);
-}
-
 void IDAstar::start_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     statistics.report_h_value_progress(f_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IDAstar::update_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     statistics.report_h_value_progress(f_value);
 }
 

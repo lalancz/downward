@@ -20,7 +20,7 @@ public:
         plugins::Options options_copy(options);
         auto temp = search_common::create_astar_open_list_factory_and_f_eval(options);
         options_copy.set("open", temp.first);
-        options_copy.set("eval", options.get<shared_ptr<Evaluator>>("eval", nullptr));
+        options_copy.set("f_eval", temp.second);
         return make_shared<ibex::IBEX>(options_copy);
     }
 };

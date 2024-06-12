@@ -29,15 +29,11 @@ class IDAstar : public SearchAlgorithm {
     int search_bound;
     const plugins::Options opts;
 
-    std::unique_ptr<StateOpenList> open_list;
-    std::shared_ptr<Evaluator> evaluator;
+    std::shared_ptr<Evaluator> f_evaluator;
     std::vector<StateID> path;
-
-    std::vector<Evaluator *> path_dependent_evaluators;
 
     void start_f_value_statistics(EvaluationContext &eval_context);
     void update_f_value_statistics(EvaluationContext &eval_context);
-    void reward_progress();
 
 protected:
     virtual void initialize() override;
@@ -48,8 +44,6 @@ public:
     virtual ~IDAstar() = default;
 
     virtual void print_statistics() const override;
-
-    void dump_search_space() const;
 };
 
 extern void add_options_to_feature(plugins::Feature &feature);

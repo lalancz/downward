@@ -24,7 +24,7 @@ using namespace std;
 namespace ibex {
 IBEX::IBEX(const plugins::Options &opts)
     : SearchAlgorithm(opts),
-      evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
+      f_evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
       opts(opts) {
 }
 
@@ -40,7 +40,7 @@ void IBEX::initialize() {
 
     solutionCost = numeric_limits<int>::max();
     budget = 0;
-    i = make_pair(eval_context.get_evaluator_value_or_infinity(evaluator.get()), numeric_limits<int>::max());
+    i = make_pair(eval_context.get_evaluator_value_or_infinity(f_evaluator.get()), numeric_limits<int>::max());
 
     // temp, should be a parameter
     c_1 = 2;
@@ -128,13 +128,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     node.emplace(search_space.get_node(currState));
 
     EvaluationContext eval_context(currState, pathCost, true, &statistics);
-    int h = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    int currF;
-    if (h == EvaluationResult::INFTY) {
-        currF = h;
-    } else {
-        currF = h + pathCost;
-    }
+    int currF = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
 
     if (solutionCost == solutionLowerBound) {
         return;
@@ -180,20 +174,20 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         if (pathCost == numeric_limits<int>::max())
             limitedDFS(succ_state, pathCost, costLimit, nodeLimit);
         else {
-        limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
+            limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
         }
     }
 }
 
 void IBEX::start_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     statistics.report_h_value_progress(f_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IBEX::update_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
     statistics.report_h_value_progress(f_value);
 }
 

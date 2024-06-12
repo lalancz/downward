@@ -17,7 +17,7 @@ class Feature;
 namespace idastar_aux {
 class IDAstar_aux : public SearchAlgorithm {
     std::unique_ptr<StateOpenList> open_list;
-    std::shared_ptr<Evaluator> evaluator;
+    std::shared_ptr<Evaluator> f_evaluator;
 
     std::vector<Evaluator *> path_dependent_evaluators;
 
@@ -38,8 +38,6 @@ public:
     virtual ~IDAstar_aux() = default;
 
     virtual void print_statistics() const override;
-
-    void dump_search_space() const;
 };
 
 extern void add_options_to_feature(plugins::Feature &feature);
