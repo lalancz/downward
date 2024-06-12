@@ -177,7 +177,11 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         if (succ_node.is_new())
             succ_node.open(*node, op, get_adjusted_cost(op));
 
+        if (pathCost == numeric_limits<int>::max())
+            limitedDFS(succ_state, pathCost, costLimit, nodeLimit);
+        else {
         limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
+        }
     }
 }
 
