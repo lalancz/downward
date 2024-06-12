@@ -124,6 +124,11 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 }
 
 void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit) {
+    if (visitedStates.find(currState.get_id()) != visitedStates.end())
+        return;
+
+    visitedStates.insert(currState.get_id());
+
     optional<SearchNode> node;
     node.emplace(search_space.get_node(currState));
 

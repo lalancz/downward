@@ -25,6 +25,8 @@ class IBEX : public SearchAlgorithm {
     std::shared_ptr<Evaluator> f_evaluator;
     std::vector<StateID> path;
 
+    std::set<StateID> visitedStates;
+
     std::vector<Evaluator *> path_dependent_evaluators;
 
     void start_f_value_statistics(EvaluationContext &eval_context);
