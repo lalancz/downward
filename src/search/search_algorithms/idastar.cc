@@ -21,8 +21,8 @@ using namespace std;
 namespace idastar {
 IDAstar::IDAstar(const plugins::Options &opts)
     : SearchAlgorithm(opts),
-      f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)),
-      opts(opts) {
+      opts(opts),
+      f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)) {
 }
 
 void IDAstar::initialize() {

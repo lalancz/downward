@@ -13,6 +13,17 @@ public:
         document_synopsis("");
 
         add_option<shared_ptr<Evaluator>>("eval", "evaluator");
+
+        add_option<int>(
+            "c_1",
+            "c_1",
+            "2");
+
+        add_option<int>(
+            "c_2",
+            "c_2",
+            "8");
+
         ibex::add_options_to_feature(*this);
     }
 

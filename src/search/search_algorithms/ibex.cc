@@ -24,8 +24,10 @@ using namespace std;
 namespace ibex {
 IBEX::IBEX(const plugins::Options &opts)
     : SearchAlgorithm(opts),
+      opts(opts),
       f_evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
-      opts(opts) {
+      c_1(opts.get<int>("c_1")),
+      c_2(opts.get<int>("c_2")) {
 }
 
 void IBEX::initialize() {
@@ -41,10 +43,6 @@ void IBEX::initialize() {
     solutionCost = numeric_limits<int>::max();
     budget = 0;
     i = make_pair(eval_context.get_evaluator_value_or_infinity(f_evaluator.get()), numeric_limits<int>::max());
-
-    // temp, should be a parameter
-    c_1 = 2;
-    c_2 = 8;
 }
 
 void IBEX::print_statistics() const {
@@ -76,7 +74,7 @@ SearchStatus IBEX::step() {
         int delta = 0;
         int nextCost;
         while ((i.second != i.first) && (nodes < c_1 * budget)) {
-            nextCost = i.first + pow(2, delta); 
+            nextCost = static_cast<int>(i.first + pow(2, delta));
             delta++;
             solutionLowerBound = i.first;
             i = interval_intersection(i, search(nextCost, c_2 * budget));
