@@ -68,9 +68,10 @@ SearchStatus IBEX::step() {
         i.second = numeric_limits<int>::max();
 
         i = interval_intersection(i, search(i.first, numeric_limits<int>::max()));
-        if (nodes >= c_1 * budget)
+        if (nodes >= c_1 * budget) {
             budget = nodes;
             continue;
+        }
 
         int delta = 0;
         int nextCost;
