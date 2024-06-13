@@ -107,8 +107,6 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     nodes = 0;
 
     State initial_state = state_registry.get_initial_state();
-    goalFound = false;
-    visitedStates.clear();
     limitedDFS(initial_state, 0, costLimit, nodeLimit);
 
     if (nodes >= nodeLimit) {
@@ -121,11 +119,6 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 }
 
 void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit) {
-    if (visitedStates.find(currState.get_id()) != visitedStates.end() || goalFound)
-        return;
-
-    visitedStates.insert(currState.get_id());
-
     optional<SearchNode> node;
     node.emplace(search_space.get_node(currState));
 
@@ -149,12 +142,13 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     }
 
     if (task_properties::is_goal_state(task_proxy, currState)) {
-        solutionPath.clear();
-        search_space.trace_path(currState, solutionPath);
-        solutionCost = currF;
-        goalFound = true;
-        log << "Goal found with cost: " << solutionCost << endl;
-        return;
+        if (currF < solutionCost) {
+            solutionPath.clear();
+            search_space.trace_path(currState, solutionPath);
+            solutionCost = currF;
+            log << "Goal found with cost: " << solutionCost << endl;
+            return;
+        }
     }
 
     vector<OperatorID> applicable_ops;
@@ -174,9 +168,6 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
         if (succ_node.is_new())
             succ_node.open(*node, op, get_adjusted_cost(op));
-
-        if (goalFound)
-            return;
 
         limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
     }

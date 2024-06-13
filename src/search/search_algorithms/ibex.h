@@ -53,8 +53,6 @@ public:
     int f_below;
     int f_above;
 
-    bool goalFound;
-
     std::pair<int, int> i;
 
     explicit IBEX(const plugins::Options &opts);
