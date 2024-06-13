@@ -23,7 +23,6 @@ class IBEX : public SearchAlgorithm {
     const plugins::Options opts;
 
     std::shared_ptr<Evaluator> f_evaluator;
-    std::vector<StateID> path;
 
     std::set<StateID> visitedStates;
 
@@ -53,6 +52,8 @@ public:
 
     int f_below;
     int f_above;
+
+    bool goalFound;
 
     std::pair<int, int> i;
 

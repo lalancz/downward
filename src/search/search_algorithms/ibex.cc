@@ -36,8 +36,6 @@ void IBEX::initialize() {
     SearchNode node = search_space.get_node(initial_state);
     node.open_initial();
 
-    path.push_back(initial_state.get_id());
-
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
 
     solutionCost = numeric_limits<int>::max();
@@ -96,7 +94,7 @@ SearchStatus IBEX::step() {
     }
 
     if (solutionCost == i.first) {
-        log << "Solution found with cost " << solutionCost << endl;
+        log << "Solution found with cost (outside while loop) " << solutionCost << endl;
         set_plan(solutionPath);
         return SOLVED;
     }
@@ -110,6 +108,8 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     nodes = 0;
 
     State initial_state = state_registry.get_initial_state();
+    goalFound = false;
+    visitedStates.clear();
     limitedDFS(initial_state, 0, costLimit, nodeLimit);
 
     if (nodes >= nodeLimit) {
@@ -122,7 +122,7 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 }
 
 void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit) {
-    if (visitedStates.find(currState.get_id()) != visitedStates.end())
+    if (visitedStates.find(currState.get_id()) != visitedStates.end() || goalFound)
         return;
 
     visitedStates.insert(currState.get_id());
@@ -131,7 +131,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     node.emplace(search_space.get_node(currState));
 
     EvaluationContext eval_context(currState, pathCost, true, &statistics);
-    int currF = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+    int currF = pathCost + eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
 
     if (solutionCost == solutionLowerBound) {
         return;
@@ -153,6 +153,8 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         solutionPath.clear();
         search_space.trace_path(currState, solutionPath);
         solutionCost = currF;
+        goalFound = true;
+        log << "Goal found with cost: " << solutionCost << endl;
         return;
     }
 
@@ -173,6 +175,9 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
         if (succ_node.is_new())
             succ_node.open(*node, op, get_adjusted_cost(op));
+
+        if (goalFound)
+            return;
 
         if (pathCost == numeric_limits<int>::max())
             limitedDFS(succ_state, pathCost, costLimit, nodeLimit);
