@@ -22,7 +22,7 @@ class IBEX : public SearchAlgorithm {
     int search_bound;
     const plugins::Options opts;
 
-    std::shared_ptr<Evaluator> f_evaluator;
+    std::shared_ptr<Evaluator> evaluator;
 
     std::set<StateID> visitedStates;
 

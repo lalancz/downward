@@ -25,7 +25,7 @@ namespace ibex {
 IBEX::IBEX(const plugins::Options &opts)
     : SearchAlgorithm(opts),
       opts(opts),
-      f_evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
+      evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
       c_1(opts.get<int>("c_1")),
       c_2(opts.get<int>("c_2")) {
 }
@@ -40,7 +40,7 @@ void IBEX::initialize() {
 
     solutionCost = numeric_limits<int>::max();
     budget = 0;
-    i = make_pair(eval_context.get_evaluator_value_or_infinity(f_evaluator.get()), numeric_limits<int>::max());
+    i = make_pair(eval_context.get_evaluator_value_or_infinity(evaluator.get()), numeric_limits<int>::max());
 }
 
 void IBEX::print_statistics() const {
@@ -56,10 +56,9 @@ std::pair<int, int> IBEX::interval_intersection(std::pair<int, int> i1, std::pai
 }
 
 SearchStatus IBEX::step() {
-    log << "The current bound is " << solutionCost << endl;
-    log << "The current interval is [" << i.first << ", " << i.second << "]" << endl;
-
     while (solutionCost > i.first) {
+        log << "i = [" << i.first << ", " << i.second << "]" << endl;
+
         solutionLowerBound = i.first;
         i.second = numeric_limits<int>::max();
 
@@ -131,7 +130,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     node.emplace(search_space.get_node(currState));
 
     EvaluationContext eval_context(currState, pathCost, true, &statistics);
-    int currF = pathCost + eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+    int currF = pathCost + eval_context.get_evaluator_value_or_infinity(evaluator.get());
 
     if (solutionCost == solutionLowerBound) {
         return;
@@ -173,8 +172,11 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         EvaluationContext succ_eval_context(succ_state, succ_g, true, &statistics);
         statistics.inc_evaluated_states();
 
-        if (succ_node.is_new())
+        if (succ_node.is_open()) {
             succ_node.open(*node, op, get_adjusted_cost(op));
+        } else {
+            succ_node.reopen(*node, op, get_adjusted_cost(op));
+        }
 
         if (goalFound)
             return;
@@ -188,14 +190,14 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 }
 
 void IBEX::start_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
     statistics.report_h_value_progress(f_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IBEX::update_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
     statistics.report_h_value_progress(f_value);
 }
 
