@@ -36,7 +36,7 @@ void IBEX::initialize() {
     SearchNode node = search_space.get_node(initial_state);
     node.open_initial();
 
-    EvaluationContext eval_context(initial_state, 0, true, &statistics);
+    EvaluationContext eval_context(initial_state, 0, false, &statistics);
 
     solutionCost = numeric_limits<int>::max();
     budget = 0;
@@ -129,7 +129,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     optional<SearchNode> node;
     node.emplace(search_space.get_node(currState));
 
-    EvaluationContext eval_context(currState, pathCost, true, &statistics);
+    EvaluationContext eval_context(currState, pathCost, false, &statistics);
     int currF = pathCost + eval_context.get_evaluator_value_or_infinity(evaluator.get());
 
     if (solutionCost == solutionLowerBound) {
@@ -168,24 +168,17 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         statistics.inc_generated();
 
         SearchNode succ_node = search_space.get_node(succ_state);
-        int succ_g = node->get_g() + get_adjusted_cost(op);
-        EvaluationContext succ_eval_context(succ_state, succ_g, true, &statistics);
+        int succ_g = pathCost + get_adjusted_cost(op);
+        EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
         statistics.inc_evaluated_states();
 
-        if (succ_node.is_open()) {
+        if (succ_node.is_new())
             succ_node.open(*node, op, get_adjusted_cost(op));
-        } else {
-            succ_node.reopen(*node, op, get_adjusted_cost(op));
-        }
 
         if (goalFound)
             return;
 
-        if (pathCost == numeric_limits<int>::max())
-            limitedDFS(succ_state, pathCost, costLimit, nodeLimit);
-        else {
-            limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
-        }
+        limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
     }
 }
 
