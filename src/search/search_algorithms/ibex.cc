@@ -90,7 +90,6 @@ SearchStatus IBEX::step() {
         budget = max(nodes, c_1 * budget);
 
         if (solutionCost == i.first) {
-        if (solutionCost == i.first) {
             log << "Solution found with cost " << solutionCost << endl;
             set_plan(solutionPath);
             return SOLVED;
