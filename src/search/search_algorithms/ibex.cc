@@ -89,7 +89,7 @@ SearchStatus IBEX::step() {
 
         budget = max(nodes, c_1 * budget);
 
-        if (solutionCost == i.first || !(solutionPath.empty())) {
+        if (solutionCost == i.first) {
             log << "Solution found with cost " << solutionCost << endl;
             set_plan(solutionPath);
             return SOLVED;
@@ -150,13 +150,11 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     }
 
     if (task_properties::is_goal_state(task_proxy, currState)) {
-        if (currF < solutionCost) {
             solutionPath.clear();
             search_space.trace_path(currState, solutionPath);
             solutionCost = currF;
             log << "Goal found with cost: " << solutionCost << endl;
             return;
-        }
     }
 
     vector<OperatorID> applicable_ops;
