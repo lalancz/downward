@@ -38,13 +38,17 @@ void IBEX::initialize() {
 
     EvaluationContext eval_context(initial_state, 0, false, &statistics);
 
+    start_f_value_statistics(eval_context);
+    statistics.inc_evaluated_states();
+
     solutionCost = numeric_limits<int>::max();
     budget = 0;
     i = make_pair(eval_context.get_evaluator_value_or_infinity(evaluator.get()), numeric_limits<int>::max());
 }
 
 void IBEX::print_statistics() const {
-    return;
+    statistics.print_detailed_statistics();
+    search_space.print_statistics();
 }
 
 std::pair<int, int> IBEX::interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2) {
@@ -123,6 +127,10 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     node.emplace(search_space.get_node(currState));
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
+
+    statistics.inc_evaluated_states();
+    update_f_value_statistics(eval_context);
+
     int currF = pathCost + eval_context.get_evaluator_value_or_infinity(evaluator.get());
 
     if (solutionCost == solutionLowerBound) {
@@ -171,6 +179,8 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
         limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
     }
+
+    statistics.inc_expanded();
 }
 
 void IBEX::start_f_value_statistics(EvaluationContext &eval_context) {

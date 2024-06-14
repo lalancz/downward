@@ -81,6 +81,9 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
     const State &s = node->get_state();
 
     EvaluationContext eval_context(s, node->get_g(), false, &idastar_statistics);
+
+    statistics.inc_evaluated_states();
+
     int f = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
 
     if (f > bound)
@@ -129,6 +132,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
             next_bound = t;
         }
 
+        statistics.inc_expanded();
         path.pop_back();
     }
 
