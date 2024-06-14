@@ -26,10 +26,15 @@ IDAstar::IDAstar(const plugins::Options &opts)
 }
 
 void IDAstar::initialize() {
+    log << "Conducting IDA* search" << endl;
+
     State initial_state = state_registry.get_initial_state();
     path.push_back(initial_state.get_id());
 
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
+
+    SearchNode node = search_space.get_node(initial_state);
+    node.open_initial();
 
     if (search_progress.check_progress(eval_context))
         statistics.print_checkpoint_line(0);
@@ -67,14 +72,7 @@ SearchStatus IDAstar::step() {
 
 void IDAstar::start_f_value_statistics(EvaluationContext &eval_context) {
     int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
-    statistics.report_h_value_progress(f_value);
-}
-
-/* TODO: HACK! This is very inefficient for simply looking up an h value.
-   Also, if h values are not saved it would recompute h for each and every state. */
-void IDAstar::update_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
-    statistics.report_h_value_progress(f_value);
+    statistics.report_f_value_progress(f_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

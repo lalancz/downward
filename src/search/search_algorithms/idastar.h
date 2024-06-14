@@ -33,7 +33,6 @@ class IDAstar : public SearchAlgorithm {
     std::vector<StateID> path;
 
     void start_f_value_statistics(EvaluationContext &eval_context);
-    void update_f_value_statistics(EvaluationContext &eval_context);
 
 protected:
     virtual void initialize() override;

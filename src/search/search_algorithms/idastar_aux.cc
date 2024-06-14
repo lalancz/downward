@@ -23,44 +23,15 @@ using namespace std;
 namespace idastar_aux {
 IDAstar_aux::IDAstar_aux(const plugins::Options &opts)
     : SearchAlgorithm(opts),
-        open_list(opts.get<shared_ptr<OpenListFactory>>("open")->create_state_open_list()),
         f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)) {
 }
 
 void IDAstar_aux::initialize() {
-    log << "Conducting IDA* search" << endl;
-    // assert(open_list);
-
-    // set<Evaluator *> evals;
-    // open_list->get_path_dependent_evaluators(evals);
-
-    // path_dependent_evaluators.assign(evals.begin(), evals.end());
+    log << "Conducting IDA* aux search" << endl;
 
     State initial_state = state_registry.get_initial_state();
-    // for (Evaluator *evaluator : path_dependent_evaluators) {
-    //     evaluator->notify_initial_state(initial_state);
-    // }
-
-    /*
-      Note: we consider the initial state as reached by a preferred
-      operator.
-    */
-    EvaluationContext eval_context(initial_state, 0, true, &statistics);
-
-    // statistics.inc_evaluated_states();
-
-    if (open_list->is_dead_end(eval_context)) {
-        log << "Initial state is a dead end." << endl;
-    } else {
-        // if (search_progress.check_progress(eval_context))
-            // statistics.print_checkpoint_line(0);
-        // start_f_value_statistics(eval_context);
-        SearchNode node = search_space.get_node(initial_state);
-        node.open_initial();
-
-        // open_list->insert(eval_context, initial_state.get_id());
-        // path.push_back(initial_state.get_id());
-    }
+    SearchNode node = search_space.get_node(initial_state);
+    node.open_initial();
 }
 
 void IDAstar_aux::print_statistics() const {
@@ -114,7 +85,7 @@ int IDAstar_aux::search(std::vector<StateID> &path, int bound, Plan &plan, Searc
         EvaluationContext succ_eval_context(succ_state, succ_g, true, &idastar_statistics);
         idastar_statistics.inc_evaluated_states();
 
-        //update_f_value_statistics(succ_eval_context, idastar_statistics);
+        update_f_value_statistics(succ_eval_context, idastar_statistics);
 
         if (search_progress.check_progress(succ_eval_context)) {
             idastar_statistics.print_checkpoint_line(succ_g);
