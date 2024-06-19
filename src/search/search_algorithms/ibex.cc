@@ -18,6 +18,7 @@
 #include <set>
 #include <stack>
 #include <math.h>
+#include <vector>
 
 using namespace std;
 
@@ -106,12 +107,15 @@ SearchStatus IBEX::step() {
 }
 
 std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
+    goalFoundCurrentIteration = false;
     f_below = 0;
     f_above = numeric_limits<int>::max();
     nodes = 0;
 
+    vector<OperatorID> currentSolutionPath;
+
     State initial_state = state_registry.get_initial_state();
-    limitedDFS(initial_state, 0, costLimit, nodeLimit);
+    limitedDFS(initial_state, 0, costLimit, nodeLimit, currentSolutionPath);
 
     if (nodes >= nodeLimit) {
         return make_pair(0, f_below);
@@ -122,16 +126,22 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     }
 }
 
-void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit) {
-    optional<SearchNode> node;
-    node.emplace(search_space.get_node(currState));
+void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, vector<OperatorID> &currentSolutionPath) {
+    SearchNode node = search_space.get_node(currState);
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
 
     statistics.inc_evaluated_states();
     update_f_value_statistics(eval_context);
 
-    int currF = pathCost + eval_context.get_evaluator_value_or_infinity(evaluator.get());
+    int value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
+
+    int currF;
+    if (value == EvaluationResult::INFTY) {
+        currF = numeric_limits<int>::max();
+    } else {
+        currF = pathCost + value;
+    }
 
     if (solutionCost == solutionLowerBound) {
         return;
@@ -150,8 +160,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     }
 
     if (task_properties::is_goal_state(task_proxy, currState)) {
-        solutionPath.clear();
-        search_space.trace_path(currState, solutionPath);
+        solutionPath = currentSolutionPath;
         solutionCost = currF;
         log << "Goal found with cost: " << solutionCost << endl;
         return;
@@ -172,10 +181,15 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
         statistics.inc_evaluated_states();
 
-        if (succ_node.is_new())
-            succ_node.open(*node, op, get_adjusted_cost(op));
+        currentSolutionPath.push_back(op_id);
 
-        limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit);
+        limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit, currentSolutionPath);
+
+        if (goalFoundCurrentIteration) {
+            return;
+        }
+
+        currentSolutionPath.pop_back();
     }
 
     statistics.inc_expanded();
