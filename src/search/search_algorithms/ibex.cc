@@ -35,7 +35,6 @@ void IBEX::initialize() {
     State initial_state = state_registry.get_initial_state();
 
     SearchNode node = search_space.get_node(initial_state);
-    node.open_initial();
 
     EvaluationContext eval_context(initial_state, 0, false, &statistics);
 
@@ -115,6 +114,7 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     vector<OperatorID> currentSolutionPath;
 
     State initial_state = state_registry.get_initial_state();
+
     limitedDFS(initial_state, 0, costLimit, nodeLimit, currentSolutionPath);
 
     if (nodes >= nodeLimit) {
@@ -130,7 +130,6 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     SearchNode node = search_space.get_node(currState);
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
-
     statistics.inc_evaluated_states();
     update_f_value_statistics(eval_context);
 
@@ -138,7 +137,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
     int currF;
     if (value == EvaluationResult::INFTY) {
-        currF = numeric_limits<int>::max();
+        currF = value;
     } else {
         currF = pathCost + value;
     }
@@ -160,6 +159,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     }
 
     if (task_properties::is_goal_state(task_proxy, currState)) {
+        goalFoundCurrentIteration = true;
         solutionPath = currentSolutionPath;
         solutionCost = currF;
         log << "Goal found with cost: " << solutionCost << endl;
@@ -176,14 +176,11 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         State succ_state = state_registry.get_successor_state(currState, op);
         statistics.inc_generated();
 
-        SearchNode succ_node = search_space.get_node(succ_state);
         int succ_g = pathCost + get_adjusted_cost(op);
-        EvaluationContext succ_eval_context(succ_state, succ_g, false, &statistics);
-        statistics.inc_evaluated_states();
 
         currentSolutionPath.push_back(op_id);
 
-        limitedDFS(succ_state, pathCost + get_adjusted_cost(op), costLimit, nodeLimit, currentSolutionPath);
+        limitedDFS(succ_state, succ_g, costLimit, nodeLimit, currentSolutionPath);
 
         if (goalFoundCurrentIteration) {
             return;
