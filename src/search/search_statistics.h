@@ -74,7 +74,6 @@ public:
       performed by the open list.)
     */
     void report_f_value_progress(int f);
-    void report_h_value_progress(int h);
     void print_checkpoint_line(int g) const;
 
     // output

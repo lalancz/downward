@@ -48,17 +48,6 @@ void SearchStatistics::print_f_line() const {
     }
 }
 
-void SearchStatistics::report_h_value_progress(int h) {
-    if (h > lastjump_h_value) {
-        lastjump_h_value = h;
-        print_h_line();
-        lastjump_expanded_states = expanded_states;
-        lastjump_reopened_states = reopened_states;
-        lastjump_evaluated_states = evaluated_states;
-        lastjump_generated_states = generated_states;
-    }
-}
-
 void SearchStatistics::print_h_line() const {
     if (log.is_at_least_normal()) {
         log << "h = " << lastjump_h_value

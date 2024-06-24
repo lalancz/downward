@@ -193,14 +193,14 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
 void IBEX::start_f_value_statistics(EvaluationContext &eval_context) {
     int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    statistics.report_h_value_progress(f_value);
+    statistics.report_f_value_progress(f_value);
 }
 
 /* TODO: HACK! This is very inefficient for simply looking up an h value.
    Also, if h values are not saved it would recompute h for each and every state. */
 void IBEX::update_f_value_statistics(EvaluationContext &eval_context) {
     int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    statistics.report_h_value_progress(f_value);
+    statistics.report_f_value_progress(f_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {
