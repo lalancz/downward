@@ -32,9 +32,8 @@ IBEX::IBEX(const plugins::Options &opts)
 }
 
 void IBEX::initialize() {
-    State initial_state = state_registry.get_initial_state();
-
-    SearchNode node = search_space.get_node(initial_state);
+    State initial_state = task_proxy.get_initial_state();
+    initial_state.unpack();
 
     EvaluationContext eval_context(initial_state, 0, false, &statistics);
 
@@ -113,7 +112,7 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 
     vector<OperatorID> currentSolutionPath;
 
-    State initial_state = state_registry.get_initial_state();
+    State initial_state = task_proxy.get_initial_state();
 
     limitedDFS(initial_state, 0, costLimit, nodeLimit, currentSolutionPath);
 
@@ -127,7 +126,7 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 }
 
 void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, vector<OperatorID> &currentSolutionPath) {
-    SearchNode node = search_space.get_node(currState);
+    currState.unpack();
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
@@ -173,7 +172,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
     for (OperatorID op_id : applicable_ops) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
-        State succ_state = state_registry.get_successor_state(currState, op);
+        State succ_state = currState.get_unregistered_successor(op);
         statistics.inc_generated();
 
         int succ_g = pathCost + get_adjusted_cost(op);
