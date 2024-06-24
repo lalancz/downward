@@ -88,14 +88,14 @@ SearchStatus IBEX::step() {
 
         budget = max(nodes, c_1 * budget);
 
-        if (solutionCost == i.first) {
+        if ((solutionCost == i.first) & !(solutionPath.empty())) {
             log << "Solution found with cost " << solutionCost << endl;
             set_plan(solutionPath);
             return SOLVED;
         }
     }
 
-    if (solutionCost == i.first) {
+    if ((solutionCost == i.first) & !(solutionPath.empty())) {
         log << "Solution found with cost (outside while loop) " << solutionCost << endl;
         set_plan(solutionPath);
         return SOLVED;
