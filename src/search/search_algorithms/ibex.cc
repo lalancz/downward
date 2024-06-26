@@ -1,5 +1,4 @@
 #include "ibex.h"
-#include "idastar_aux.h"
 
 #include "../evaluation_context.h"
 #include "../evaluator.h"

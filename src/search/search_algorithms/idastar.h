@@ -3,8 +3,6 @@
 
 #include "../open_list.h"
 #include "../search_algorithm.h"
-
-#include "idastar_aux.h"
 #include "../plugins/options.h"
 
 #include <memory>

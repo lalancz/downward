@@ -393,15 +393,6 @@ fast_downward_plugin(
 )
 
 fast_downward_plugin(
-    NAME IDASTAR_AUX
-    HELP "Iterative deepening A* search (aux)"
-    SOURCES
-        search_algorithms/idastar_aux
-    DEPENDS IDASTAR SEARCH_COMMON LAZYSEARCH IDASTAR_AUX
-    DEPENDECY_ONLY
-)
-
-fast_downward_plugin(
     NAME PLUGIN_IDASTAR
     HELP "Iterative deepening A* search"
     SOURCES
