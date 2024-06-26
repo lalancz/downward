@@ -7,6 +7,7 @@
 #include "../algorithms/ordered_set.h"
 #include "../plugins/options.h"
 #include "../task_utils/successor_generator.h"
+#include "../task_utils/task_properties.h"
 #include "../utils/logging.h"
 
 #include <cassert>
@@ -28,13 +29,12 @@ IDAstar::IDAstar(const plugins::Options &opts)
 void IDAstar::initialize() {
     log << "Conducting IDA* search" << endl;
 
-    State initial_state = state_registry.get_initial_state();
-    path.push_back(initial_state.get_id());
+    State initial_state = task_proxy.get_initial_state();
+    initial_state.unpack();
+
+    solutionPath.push_back(initial_state);
 
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
-
-    SearchNode node = search_space.get_node(initial_state);
-    node.open_initial();
 
     if (search_progress.check_progress(eval_context))
         statistics.print_checkpoint_line(0);
@@ -51,23 +51,80 @@ void IDAstar::print_statistics() const {
 }
 
 SearchStatus IDAstar::step() {
-    Plan plan;
-
-    idastar_aux::IDAstar_aux idastar_aux = idastar_aux::IDAstar_aux(opts);
-    idastar_aux.initialize();
+    operatorPath.clear();
+    solutionPath.clear();
     
     log << "The current bound is " << search_bound << endl;
-    int t = idastar_aux.search(path, search_bound, plan, statistics);
+    int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound, statistics);
     if (t == AUX_SOLVED) {
-        set_plan(plan);
+        set_plan(operatorPath);
         return SOLVED;
-    } else if (t == AUX_FAILED || t == numeric_limits<int>::max()) {
+    } else if (t == numeric_limits<int>::max()) {
         return FAILED;
     }
 
     search_bound = t;
 
     return IN_PROGRESS;
+}
+
+int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &solutionPath, int pathCost, 
+        State currState, int bound, SearchStatistics &idastar_statistics) {
+    currState.unpack();
+
+    EvaluationContext eval_context(currState, pathCost, false, &idastar_statistics);
+    
+
+    statistics.inc_evaluated_states();
+
+    int f = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+
+    if (f > bound)
+        return f;
+
+    if (task_properties::is_goal_state(task_proxy, currState)){
+        return AUX_SOLVED;
+    }
+
+    vector<OperatorID> applicable_ops;
+    successor_generator.generate_applicable_ops(currState, applicable_ops);
+
+    int next_bound = numeric_limits<int>::max();
+    for (OperatorID op_id : applicable_ops) {
+        OperatorProxy op = task_proxy.get_operators()[op_id];
+        State succ_state = currState.get_unregistered_successor(op);
+        StateID succ_id = succ_state.get_id();
+        idastar_statistics.inc_generated();
+
+        if (pathContains(solutionPath, succ_state))
+            continue;
+            
+        solutionPath.push_back(succ_state);
+        operatorPath.push_back(op_id);
+
+        int t = search(operatorPath, solutionPath, pathCost + get_adjusted_cost(op), succ_state, bound, idastar_statistics);
+        if (t == AUX_SOLVED) {
+            return AUX_SOLVED;
+        } else if (t < next_bound) {
+            next_bound = t;
+        }
+
+        statistics.inc_expanded();
+
+        solutionPath.pop_back();
+        operatorPath.pop_back();
+    }
+
+    return next_bound;
+}
+
+bool IDAstar::pathContains(std::vector<State> &path, State state) {
+    for (State state_temp : path) {
+        if (state_temp == state) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void IDAstar::start_f_value_statistics(EvaluationContext &eval_context) {

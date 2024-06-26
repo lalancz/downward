@@ -19,18 +19,20 @@ class Feature;
 
 namespace idastar {
 
-enum AuxSearchStatus {
-    AUX_FAILED = -1,
-    AUX_SOLVED = -2,
-    AUX_IN_PROGRESS = -3
-};
+constexpr int AUX_SOLVED = -1;
 
 class IDAstar : public SearchAlgorithm {
     int search_bound;
     const plugins::Options opts;
 
     std::shared_ptr<Evaluator> f_evaluator;
-    std::vector<StateID> path;
+
+    std::vector<OperatorID> operatorPath;
+    std::vector<State> solutionPath;
+
+    int search(std::vector<OperatorID> &operatorPath, std::vector<State> &solutionPath, int pathCost, 
+        State currState, int bound, SearchStatistics &idastar_statistics);
+    bool pathContains(std::vector<State> &path, State state);
 
     void start_f_value_statistics(EvaluationContext &eval_context);
 
