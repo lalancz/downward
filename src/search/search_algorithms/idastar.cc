@@ -52,6 +52,9 @@ void IDAstar::print_statistics() const {
 SearchStatus IDAstar::step() {
     operatorPath.clear();
     solutionPath.clear();
+
+    operatorPath.reserve(search_bound);
+    solutionPath.reserve(search_bound);
     
     log << "The current bound is " << search_bound << endl;
     int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound, statistics);
