@@ -30,7 +30,6 @@ void IDAstar::initialize() {
     log << "Conducting IDA* search" << endl;
 
     State initial_state = task_proxy.get_initial_state();
-    initial_state.unpack();
 
     solutionPath.push_back(initial_state);
 
@@ -70,7 +69,6 @@ SearchStatus IDAstar::step() {
 
 int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &solutionPath, int pathCost, 
         State currState, int bound, SearchStatistics &idastar_statistics) {
-    currState.unpack();
 
     EvaluationContext eval_context(currState, pathCost, false, &idastar_statistics);
     

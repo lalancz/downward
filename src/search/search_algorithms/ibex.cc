@@ -32,7 +32,6 @@ IBEX::IBEX(const plugins::Options &opts)
 
 void IBEX::initialize() {
     State initial_state = task_proxy.get_initial_state();
-    initial_state.unpack();
 
     EvaluationContext eval_context(initial_state, 0, false, &statistics);
 
@@ -125,8 +124,6 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 }
 
 void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, vector<OperatorID> &currentSolutionPath) {
-    currState.unpack();
-
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
     update_f_value_statistics(eval_context);
