@@ -24,16 +24,18 @@ class IBEX : public SearchAlgorithm {
 
     std::shared_ptr<Evaluator> evaluator;
 
-    std::set<StateID> visitedStates;
 
-    std::vector<Evaluator *> path_dependent_evaluators;
+
+
 
     void start_f_value_statistics(EvaluationContext &eval_context);
     void update_f_value_statistics(EvaluationContext &eval_context);
 
     std::pair<int, int> interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2);
     std::pair<int, int> search(int costLimit, int nodeLimit);
-    void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, std::vector<OperatorID> &currentSolutionPath);
+    void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, std::vector<State> &currentPath,
+        std::vector<OperatorID> &currentSolutionPath);
+    bool pathContains(std::vector<State> &path, State state);
 
 protected:
     virtual void initialize() override;

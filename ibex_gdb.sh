@@ -3,10 +3,10 @@
 ./build.py --debug
 
 # Execute the fast-downward.py script
-./fast-downward.py --debug --keep-sas misc/tests/benchmarks/miconic/s1-0.pddl --search "ibex(lmcut())"
+./fast-downward.py --debug --keep-sas misc/tests/benchmarks/sokoban-opt08-strips/p01.pddl --search "ibex(lmcut(cache_estimates=false))"
 
 # Write gdb commands to a file
-echo "run --search \"ibex(lmcut())\" < output.sas" > gdb_commands.txt
+echo "run --search \"ibex(lmcut(cache_estimates=false))\" < output.sas" > gdb_commands.txt
 echo "bt" >> gdb_commands.txt
 
 # Run gdb with the commands from the file

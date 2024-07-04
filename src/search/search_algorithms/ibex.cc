@@ -64,10 +64,13 @@ SearchStatus IBEX::step() {
         i.second = numeric_limits<int>::max();
 
         i = interval_intersection(i, search(i.first, numeric_limits<int>::max()));
+        log << "i = [" << i.first << ", " << i.second << "]" << endl;
         if (nodes >= c_1 * budget) {
             budget = nodes;
             continue;
         }
+
+        log << "Past the first search" << endl;
 
         int delta = 0;
         int nextCost;
@@ -76,12 +79,14 @@ SearchStatus IBEX::step() {
             delta++;
             solutionLowerBound = i.first;
             i = interval_intersection(i, search(nextCost, c_2 * budget));
+            log << "i = [" << i.first << ", " << i.second << "]" << endl;
         }
 
         while ((i.second != i.first) && !((c_1 * budget <= nodes) && (nodes < c_2 * budget))) {
             nextCost = (i.first + i.second) / 2;
             solutionLowerBound = i.first;
             i = interval_intersection(i, search(nextCost, c_2 * budget));
+            log << "i = [" << i.first << ", " << i.second << "]" << endl;
         }
 
         budget = max(nodes, c_1 * budget);
@@ -108,11 +113,12 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     f_above = numeric_limits<int>::max();
     nodes = 0;
 
-    vector<OperatorID> currentSolutionPath;
-
     State initial_state = task_proxy.get_initial_state();
 
-    limitedDFS(initial_state, 0, costLimit, nodeLimit, currentSolutionPath);
+    std::vector<State> currentPath;
+    std::vector<OperatorID> solutionPath;
+
+    limitedDFS(initial_state, 0, costLimit, nodeLimit, currentPath, solutionPath);
 
     if (nodes >= nodeLimit) {
         return make_pair(0, f_below);
@@ -123,7 +129,9 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     }
 }
 
-void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, vector<OperatorID> &currentSolutionPath) {
+void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, vector<State> &currentPath,
+        vector<OperatorID> &currentSolutionPath) {
+
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
     update_f_value_statistics(eval_context);
@@ -173,18 +181,33 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
         int succ_g = pathCost + get_adjusted_cost(op);
 
-        currentSolutionPath.push_back(op_id);
+        if (pathContains(currentPath, succ_state)) 
+            continue;
+        
 
-        limitedDFS(succ_state, succ_g, costLimit, nodeLimit, currentSolutionPath);
+        currentSolutionPath.push_back(op_id);
+        currentPath.push_back(succ_state);
+
+        limitedDFS(succ_state, succ_g, costLimit, nodeLimit, currentPath, currentSolutionPath);
 
         if (goalFoundCurrentIteration) {
             return;
         }
 
+        currentPath.pop_back();
         currentSolutionPath.pop_back();
     }
 
     statistics.inc_expanded();
+}
+
+bool IBEX::pathContains(std::vector<State> &path, State state) {
+    for (State state_temp : path) {
+        if (state_temp == state) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void IBEX::start_f_value_statistics(EvaluationContext &eval_context) {
