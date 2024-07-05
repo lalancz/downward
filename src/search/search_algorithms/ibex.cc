@@ -27,10 +27,15 @@ IBEX::IBEX(const plugins::Options &opts)
       opts(opts),
       evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
       c_1(opts.get<int>("c_1")),
-      c_2(opts.get<int>("c_2")) {
+      c_2(opts.get<int>("c_2")),
+      force_idastar(opts.get<bool>("force_idastar")) {
 }
 
 void IBEX::initialize() {
+    // force nodes >= c_1 * budget to trigger in step function
+    if (force_idastar)
+        nodes = 1000000;
+
     State initial_state = task_proxy.get_initial_state();
 
     EvaluationContext eval_context(initial_state, 0, false, &statistics);

@@ -24,6 +24,11 @@ public:
             "c_2",
             "8");
 
+        add_option<bool>(
+            "force_idastar",
+            "force_idastar",
+            "false");
+
         ibex::add_options_to_feature(*this);
     }
 };

@@ -19,6 +19,8 @@ class Feature;
 namespace ibex {
 
 class IBEX : public SearchAlgorithm {
+    const bool force_idastar;
+
     int search_bound;
     const plugins::Options opts;
 
