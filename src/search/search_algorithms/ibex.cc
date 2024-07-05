@@ -34,8 +34,6 @@ void IBEX::initialize() {
     State initial_state = task_proxy.get_initial_state();
 
     EvaluationContext eval_context(initial_state, 0, false, &statistics);
-
-    start_f_value_statistics(eval_context);
     statistics.inc_evaluated_states();
 
     solutionCost = numeric_limits<int>::max();
@@ -134,7 +132,6 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
-    update_f_value_statistics(eval_context);
 
     int value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
 
@@ -208,18 +205,6 @@ bool IBEX::pathContains(std::vector<State> &path, State state) {
         }
     }
     return false;
-}
-
-void IBEX::start_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    statistics.report_f_value_progress(f_value);
-}
-
-/* TODO: HACK! This is very inefficient for simply looking up an h value.
-   Also, if h values are not saved it would recompute h for each and every state. */
-void IBEX::update_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(evaluator.get());
-    statistics.report_f_value_progress(f_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

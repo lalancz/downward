@@ -34,11 +34,7 @@ void IDAstar::initialize() {
     solutionPath.push_back(initial_state);
 
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
-
-    if (search_progress.check_progress(eval_context))
-        statistics.print_checkpoint_line(0);
-    start_f_value_statistics(eval_context);
-
+    
     search_bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
 
     print_initial_evaluator_values(eval_context);
@@ -126,11 +122,6 @@ bool IDAstar::pathContains(std::vector<State> &path, State state) {
         }
     }
     return false;
-}
-
-void IDAstar::start_f_value_statistics(EvaluationContext &eval_context) {
-    int f_value = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
-    statistics.report_f_value_progress(f_value);
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

@@ -32,8 +32,6 @@ class IDAstar : public SearchAlgorithm {
         State currState, int bound, SearchStatistics &idastar_statistics);
     bool pathContains(std::vector<State> &path, State state);
 
-    void start_f_value_statistics(EvaluationContext &eval_context);
-
 protected:
     virtual void initialize() override;
     virtual SearchStatus step() override;
