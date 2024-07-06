@@ -29,6 +29,8 @@ IDAstar::IDAstar(const plugins::Options &opts)
 void IDAstar::initialize() {
     log << "Conducting IDA* search" << endl;
 
+    num_of_iterations = 0;
+
     State initial_state = task_proxy.get_initial_state();
 
     solutionPath.push_back(initial_state);
@@ -46,6 +48,8 @@ void IDAstar::print_statistics() const {
 }
 
 SearchStatus IDAstar::step() {
+    num_of_iterations++;
+
     operatorPath.clear();
     solutionPath.clear();
 
@@ -55,6 +59,7 @@ SearchStatus IDAstar::step() {
     log << "The current bound is " << search_bound << endl;
     int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound, statistics);
     if (t == AUX_SOLVED) {
+        log << "Number of iterations: " << num_of_iterations << endl;
         set_plan(operatorPath);
         return SOLVED;
     } else if (t == numeric_limits<int>::max()) {

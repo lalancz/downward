@@ -21,6 +21,8 @@ namespace ibex {
 class IBEX : public SearchAlgorithm {
     const bool force_idastar;
 
+    int num_of_iterations;
+
     int search_bound;
     const plugins::Options opts;
 
@@ -31,6 +33,8 @@ class IBEX : public SearchAlgorithm {
     void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, std::vector<State> &currentPath,
         std::vector<OperatorID> &currentSolutionPath);
     bool pathContains(std::vector<State> &path, State state);
+
+    bool check_goal();
 
 protected:
     virtual void initialize() override;

@@ -23,6 +23,8 @@ class IDAstar : public SearchAlgorithm {
     int search_bound;
     const plugins::Options opts;
 
+    int num_of_iterations;
+
     std::shared_ptr<Evaluator> f_evaluator;
 
     std::vector<OperatorID> operatorPath;

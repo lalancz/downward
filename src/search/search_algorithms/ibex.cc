@@ -36,6 +36,8 @@ void IBEX::initialize() {
     if (force_idastar)
         nodes = 1000000;
 
+    num_of_iterations = 0;
+
     State initial_state = task_proxy.get_initial_state();
 
     EvaluationContext eval_context(initial_state, 0, false, &statistics);
@@ -62,6 +64,7 @@ std::pair<int, int> IBEX::interval_intersection(std::pair<int, int> i1, std::pai
 SearchStatus IBEX::step() {
     while (solutionCost > i.first) {
         log << "i = [" << i.first << ", " << i.second << "]" << endl;
+        num_of_iterations++;
 
         solutionLowerBound = i.first;
         i.second = numeric_limits<int>::max();
@@ -94,18 +97,12 @@ SearchStatus IBEX::step() {
 
         budget = max(nodes, c_1 * budget);
 
-        if ((solutionCost == i.first) & !(solutionPath.empty())) {
-            log << "Solution found with cost " << solutionCost << endl;
-            set_plan(solutionPath);
+        if (check_goal()) 
             return SOLVED;
-        }
     }
 
-    if ((solutionCost == i.first) & !(solutionPath.empty())) {
-        log << "Solution found with cost (outside while loop) " << solutionCost << endl;
-        set_plan(solutionPath);
+    if (check_goal()) 
         return SOLVED;
-    }
     
     return FAILED;
 }
@@ -201,6 +198,17 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     }
 
     statistics.inc_expanded();
+}
+
+bool IBEX::check_goal() {
+    if ((solutionCost == i.first) & !(solutionPath.empty())) {
+        log << "Solution found with cost (outside while loop) " << solutionCost << endl;
+        log << "Number of iterations: " << num_of_iterations << endl;
+        set_plan(solutionPath);
+        return true;
+    }
+
+    return false;
 }
 
 bool IBEX::pathContains(std::vector<State> &path, State state) {
