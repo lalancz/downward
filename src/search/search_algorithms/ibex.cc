@@ -22,6 +22,8 @@
 
 using namespace std;
 
+const int DELIMITER = 12345;
+
 namespace ibex {
 IBEX::IBEX(const plugins::Options &opts)
     : SearchAlgorithm(opts),
@@ -215,19 +217,19 @@ bool IBEX::check_goal() {
 
         log << "Iteration times: ";
         for (utils::Duration time : iteration_times) {
-            log << time << " ";
+            log << time << DELIMITER;
         }
         log << endl;
 
         log << "Iteration budgets: ";
         for (int budget : iteration_budgets) {
-            log << budget << " ";
+            log << budget << DELIMITER;
         }
         log << endl;
 
         log << "Nodes expanded per iteration: ";
         for (int nodes : nodes_expanded_per_iteration) {
-            log << nodes << " ";
+            log << nodes << DELIMITER;
         }
         log << endl;
 
