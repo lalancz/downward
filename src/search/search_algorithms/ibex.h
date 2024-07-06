@@ -5,6 +5,7 @@
 #include "../search_algorithm.h"
 
 #include "../plugins/options.h"
+#include "../utils/timer.h"
 
 #include <memory>
 #include <vector>
@@ -19,14 +20,18 @@ class Feature;
 namespace ibex {
 
 class IBEX : public SearchAlgorithm {
+    const plugins::Options opts;
+    std::shared_ptr<Evaluator> evaluator;
+
+    const int c_1;
+    const int c_2;
     const bool force_idastar;
 
     int num_of_iterations;
+    std::vector<utils::Duration> iteration_times;
+    std::vector<int> iteration_budgets;
 
     int search_bound;
-    const plugins::Options opts;
-
-    std::shared_ptr<Evaluator> evaluator;
 
     std::pair<int, int> interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2);
     std::pair<int, int> search(int costLimit, int nodeLimit);
@@ -47,9 +52,6 @@ public:
 
     int budget;
     int nodes;
-
-    int c_1;
-    int c_2;
 
     int f_below;
     int f_above;

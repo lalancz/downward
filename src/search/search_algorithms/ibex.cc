@@ -9,6 +9,7 @@
 #include "../task_utils/successor_generator.h"
 #include "../task_utils/task_properties.h"
 #include "../utils/logging.h"
+#include "../utils/timer.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -118,7 +119,13 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     std::vector<State> currentPath;
     std::vector<OperatorID> solutionPath;
 
+    utils::Timer iteration_timer;
+    
     limitedDFS(initial_state, 0, costLimit, nodeLimit, currentPath, solutionPath);
+
+    iteration_times.push_back(iteration_timer.stop());
+    iteration_budgets.push_back(costLimit);
+
 
     if (nodes >= nodeLimit) {
         return make_pair(0, f_below);
@@ -204,6 +211,19 @@ bool IBEX::check_goal() {
     if ((solutionCost == i.first) & !(solutionPath.empty())) {
         log << "Solution found with cost (outside while loop) " << solutionCost << endl;
         log << "Number of iterations: " << num_of_iterations << endl;
+
+        log << "Iteration times: ";
+        for (utils::Duration time : iteration_times) {
+            log << time << " ";
+        }
+        log << endl;
+
+        log << "Iteration budgets: ";
+        for (int budget : iteration_budgets) {
+            log << budget << " ";
+        }
+        log << endl;
+
         set_plan(solutionPath);
         return true;
     }

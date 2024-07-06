@@ -9,6 +9,7 @@
 #include "../task_utils/successor_generator.h"
 #include "../task_utils/task_properties.h"
 #include "../utils/logging.h"
+#include "../utils/timer.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -49,17 +50,35 @@ void IDAstar::print_statistics() const {
 
 SearchStatus IDAstar::step() {
     num_of_iterations++;
+    utils::Timer iteration_timer;
 
     operatorPath.clear();
     solutionPath.clear();
 
     operatorPath.reserve(search_bound);
     solutionPath.reserve(search_bound);
-    
+
+    iteration_budgets.push_back(search_bound);
+
     log << "The current bound is " << search_bound << endl;
     int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound, statistics);
     if (t == AUX_SOLVED) {
+        iteration_times.push_back(iteration_timer.stop());
+
         log << "Number of iterations: " << num_of_iterations << endl;
+
+        log << "Iteration times: ";
+        for (utils::Duration time : iteration_times) {
+            log << time << " ";
+        }
+        log << endl;
+
+        log << "Iteration budgets: ";
+        for (int budget : iteration_budgets) {
+            log << budget << " ";
+        }
+        log << endl;
+
         set_plan(operatorPath);
         return SOLVED;
     } else if (t == numeric_limits<int>::max()) {
@@ -67,6 +86,8 @@ SearchStatus IDAstar::step() {
     }
 
     search_bound = t;
+
+    iteration_times.push_back(iteration_timer.stop());
 
     return IN_PROGRESS;
 }
