@@ -26,6 +26,9 @@ class IDAstar : public SearchAlgorithm {
     int num_of_iterations;
     std::vector<utils::Duration> iteration_times;
     std::vector<int> iteration_budgets;
+    std::vector<int> nodes_expanded_per_iteration;
+
+    int nodes;
 
     std::shared_ptr<Evaluator> f_evaluator;
 

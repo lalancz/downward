@@ -125,6 +125,7 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 
     iteration_times.push_back(iteration_timer.stop());
     iteration_budgets.push_back(costLimit);
+    nodes_expanded_per_iteration.push_back(nodes);
 
 
     if (nodes >= nodeLimit) {
@@ -221,6 +222,12 @@ bool IBEX::check_goal() {
         log << "Iteration budgets: ";
         for (int budget : iteration_budgets) {
             log << budget << " ";
+        }
+        log << endl;
+
+        log << "Nodes expanded per iteration: ";
+        for (int nodes : nodes_expanded_per_iteration) {
+            log << nodes << " ";
         }
         log << endl;
 

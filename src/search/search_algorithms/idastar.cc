@@ -50,6 +50,7 @@ void IDAstar::print_statistics() const {
 
 SearchStatus IDAstar::step() {
     num_of_iterations++;
+    nodes = 0;
     utils::Timer iteration_timer;
 
     operatorPath.clear();
@@ -64,6 +65,7 @@ SearchStatus IDAstar::step() {
     int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound, statistics);
     if (t == AUX_SOLVED) {
         iteration_times.push_back(iteration_timer.stop());
+        nodes_expanded_per_iteration.push_back(nodes);
 
         log << "Number of iterations: " << num_of_iterations << endl;
 
@@ -79,6 +81,12 @@ SearchStatus IDAstar::step() {
         }
         log << endl;
 
+        log << "Nodes expanded per iteration: ";
+        for (int nodes : nodes_expanded_per_iteration) {
+            log << nodes << " ";
+        }
+        log << endl;
+
         set_plan(operatorPath);
         return SOLVED;
     } else if (t == numeric_limits<int>::max()) {
@@ -88,6 +96,7 @@ SearchStatus IDAstar::step() {
     search_bound = t;
 
     iteration_times.push_back(iteration_timer.stop());
+    nodes_expanded_per_iteration.push_back(nodes);
 
     return IN_PROGRESS;
 }
@@ -111,6 +120,8 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
 
     vector<OperatorID> applicable_ops;
     successor_generator.generate_applicable_ops(currState, applicable_ops);
+
+    nodes++;
 
     int next_bound = numeric_limits<int>::max();
     for (OperatorID op_id : applicable_ops) {
