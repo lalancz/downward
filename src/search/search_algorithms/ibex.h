@@ -38,7 +38,6 @@ class IBEX : public SearchAlgorithm {
     std::pair<int, int> search(int costLimit, int nodeLimit);
     void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, std::vector<State> &currentPath,
         std::vector<OperatorID> &currentSolutionPath);
-    bool pathContains(std::vector<State> &path, State state);
 
     bool check_goal();
 

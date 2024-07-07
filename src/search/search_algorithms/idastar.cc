@@ -40,10 +40,9 @@ void IDAstar::initialize() {
     solutionPath.push_back(initial_state);
 
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
+    statistics.inc_evaluated_states();
     
     search_bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
-
-    print_initial_evaluator_values(eval_context);
 }
 
 void IDAstar::print_statistics() const {
@@ -105,8 +104,6 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
         State currState, int bound, SearchStatistics &idastar_statistics) {
 
     EvaluationContext eval_context(currState, pathCost, false, &idastar_statistics);
-    
-
     statistics.inc_evaluated_states();
 
     int f = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
@@ -120,6 +117,7 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
 
     vector<OperatorID> applicable_ops;
     successor_generator.generate_applicable_ops(currState, applicable_ops);
+    statistics.inc_expanded();
 
     nodes++;
 
@@ -127,8 +125,8 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
     for (OperatorID op_id : applicable_ops) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
         State succ_state = currState.get_unregistered_successor(op);
-        StateID succ_id = succ_state.get_id();
         idastar_statistics.inc_generated();
+        StateID succ_id = succ_state.get_id();
 
         if (pathContains(solutionPath, succ_state))
             continue;
@@ -142,8 +140,6 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
         } else if (t < next_bound) {
             next_bound = t;
         }
-
-        statistics.inc_expanded();
 
         solutionPath.pop_back();
         operatorPath.pop_back();

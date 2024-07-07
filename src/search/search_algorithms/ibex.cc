@@ -181,6 +181,7 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
 
     vector<OperatorID> applicable_ops;
     successor_generator.generate_applicable_ops(currState, applicable_ops);
+    statistics.inc_expanded();
 
     nodes++;
 
@@ -190,25 +191,15 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         statistics.inc_generated();
 
         int succ_g = pathCost + get_adjusted_cost(op);
-
-        if (pathContains(currentPath, succ_state)) 
-            continue;
         
-
         currentSolutionPath.push_back(op_id);
         currentPath.push_back(succ_state);
 
         limitedDFS(succ_state, succ_g, costLimit, nodeLimit, currentPath, currentSolutionPath);
 
-        if (goalFoundCurrentIteration) {
-            return;
-        }
-
         currentPath.pop_back();
         currentSolutionPath.pop_back();
     }
-
-    statistics.inc_expanded();
 }
 
 bool IBEX::check_goal() {
@@ -235,15 +226,6 @@ bool IBEX::check_goal() {
         return true;
     }
 
-    return false;
-}
-
-bool IBEX::pathContains(std::vector<State> &path, State state) {
-    for (State state_temp : path) {
-        if (state_temp == state) {
-            return true;
-        }
-    }
     return false;
 }
 
