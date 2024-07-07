@@ -17,6 +17,7 @@
 #include <optional>
 #include <set>
 #include <stack>
+#include <numeric>
 
 using namespace std;
 
@@ -71,11 +72,8 @@ SearchStatus IDAstar::step() {
 
         log << "Number of iterations: " << num_of_iterations << endl;
 
-        log << "Iteration times: ";
-        for (utils::Duration time : iteration_times) {
-            log << time << DELIMITER;
-        }
-        log << endl;
+        double average_iteration_time = accumulate(iteration_times.begin(), iteration_times.end(), 0.0) / iteration_times.size();
+        log << "Average iteration time: " << average_iteration_time << endl;
 
         log << "Iteration budgets: ";
         for (int budget : iteration_budgets) {
