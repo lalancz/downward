@@ -62,7 +62,7 @@ SearchStatus IDAstar::step() {
     total_iteration_budgets = total_iteration_budgets + search_bound;
 
     log << "The current bound is " << search_bound << endl;
-    int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound, statistics);
+    int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound);
     if (t == AUX_SOLVED) {
         total_iteration_times = total_iteration_times + iteration_timer.stop();
         total_nodes_expanded_per_iteration= total_nodes_expanded_per_iteration + nodes;
@@ -93,9 +93,9 @@ SearchStatus IDAstar::step() {
 }
 
 int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &solutionPath, int pathCost, 
-        State currState, int bound, SearchStatistics &idastar_statistics) {
+        State currState, int bound) {
 
-    EvaluationContext eval_context(currState, pathCost, false, &idastar_statistics);
+    EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
 
     int f = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
@@ -117,7 +117,7 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
     for (OperatorID op_id : applicable_ops) {
         OperatorProxy op = task_proxy.get_operators()[op_id];
         State succ_state = currState.get_unregistered_successor(op);
-        idastar_statistics.inc_generated();
+        statistics.inc_generated();
         StateID succ_id = succ_state.get_id();
 
         if (pathContains(solutionPath, succ_state))
@@ -126,7 +126,7 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
         solutionPath.push_back(succ_state);
         operatorPath.push_back(op_id);
 
-        int t = search(operatorPath, solutionPath, pathCost + get_adjusted_cost(op), succ_state, bound, idastar_statistics);
+        int t = search(operatorPath, solutionPath, pathCost + get_adjusted_cost(op), succ_state, bound);
         if (t == AUX_SOLVED) {
             return AUX_SOLVED;
         } else if (t < next_bound) {

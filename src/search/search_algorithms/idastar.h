@@ -22,7 +22,7 @@ constexpr int AUX_SOLVED = -1;
 class IDAstar : public SearchAlgorithm {
     int search_bound;
     const plugins::Options opts;
-    
+
     int num_of_iterations;
     double total_iteration_times;
     int total_iteration_budgets;
@@ -36,7 +36,7 @@ class IDAstar : public SearchAlgorithm {
     std::vector<State> solutionPath;
 
     int search(std::vector<OperatorID> &operatorPath, std::vector<State> &solutionPath, int pathCost, 
-        State currState, int bound, SearchStatistics &idastar_statistics);
+        State currState, int bound);
     bool pathContains(std::vector<State> &path, State state);
 
 protected:
