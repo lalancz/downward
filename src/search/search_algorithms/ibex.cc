@@ -23,8 +23,6 @@
 
 using namespace std;
 
-const int DELIMITER = 12345;
-
 namespace ibex {
 IBEX::IBEX(const plugins::Options &opts)
     : SearchAlgorithm(opts),
@@ -126,9 +124,9 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     
     limitedDFS(initial_state, 0, costLimit, nodeLimit, currentPath, solutionPath);
 
-    iteration_times.push_back(iteration_timer.stop());
-    iteration_budgets.push_back(costLimit);
-    nodes_expanded_per_iteration.push_back(nodes);
+    total_iteration_times = total_iteration_times + iteration_timer.stop();
+    total_iteration_budgets = total_iteration_budgets + costLimit;
+    total_nodes_expanded_per_iteration= total_nodes_expanded_per_iteration + nodes;
 
 
     if (nodes >= nodeLimit) {
@@ -207,20 +205,14 @@ bool IBEX::check_goal() {
         log << "Solution found with cost: " << solutionCost << endl;
         log << "Number of iterations: " << num_of_iterations << endl;
 
-        double average_iteration_time = accumulate(iteration_times.begin(), iteration_times.end(), 0.0) / iteration_times.size();
+        double average_iteration_time = total_iteration_times / num_of_iterations;
         log << "Average iteration time: " << average_iteration_time << endl;
 
-        log << "Iteration budgets: ";
-        for (int budget : iteration_budgets) {
-            log << budget << DELIMITER;
-        }
-        log << endl;
+        float average_budget = total_iteration_budgets / num_of_iterations;
+        log << "Average iteration budget: " << average_budget << endl;
 
-        log << "Nodes expanded per iteration: ";
-        for (int nodes : nodes_expanded_per_iteration) {
-            log << nodes << DELIMITER;
-        }
-        log << endl;
+        float average_nodes_expanded = total_nodes_expanded_per_iteration / num_of_iterations;
+        log << "Average nodes expanded per iteration: " << average_nodes_expanded << endl;
 
         set_plan(solutionPath);
         return true;

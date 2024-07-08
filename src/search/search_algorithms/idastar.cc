@@ -21,8 +21,6 @@
 
 using namespace std;
 
-const int DELIMITER = 12345;
-
 namespace idastar {
 IDAstar::IDAstar(const plugins::Options &opts)
     : SearchAlgorithm(opts),
@@ -61,30 +59,24 @@ SearchStatus IDAstar::step() {
     operatorPath.reserve(search_bound);
     solutionPath.reserve(search_bound);
 
-    iteration_budgets.push_back(search_bound);
+    total_iteration_budgets = total_iteration_budgets + search_bound;
 
     log << "The current bound is " << search_bound << endl;
     int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound, statistics);
     if (t == AUX_SOLVED) {
-        iteration_times.push_back(iteration_timer.stop());
-        nodes_expanded_per_iteration.push_back(nodes);
+        total_iteration_times = total_iteration_times + iteration_timer.stop();
+        total_nodes_expanded_per_iteration= total_nodes_expanded_per_iteration + nodes;
 
         log << "Number of iterations: " << num_of_iterations << endl;
 
-        double average_iteration_time = accumulate(iteration_times.begin(), iteration_times.end(), 0.0) / iteration_times.size();
+        double average_iteration_time = total_iteration_times / num_of_iterations;
         log << "Average iteration time: " << average_iteration_time << endl;
 
-        log << "Iteration budgets: ";
-        for (int budget : iteration_budgets) {
-            log << budget << DELIMITER;
-        }
-        log << endl;
+        float average_budget = total_iteration_budgets / num_of_iterations;
+        log << "Average iteration budget: " << average_budget << endl;
 
-        log << "Nodes expanded per iteration: ";
-        for (int nodes : nodes_expanded_per_iteration) {
-            log << nodes << DELIMITER;
-        }
-        log << endl;
+        float average_nodes_expanded = total_nodes_expanded_per_iteration / num_of_iterations;
+        log << "Average nodes expanded per iteration: " << average_nodes_expanded << endl;
 
         set_plan(operatorPath);
         return SOLVED;
@@ -94,8 +86,8 @@ SearchStatus IDAstar::step() {
 
     search_bound = t;
 
-    iteration_times.push_back(iteration_timer.stop());
-    nodes_expanded_per_iteration.push_back(nodes);
+    total_iteration_times = total_iteration_times + iteration_timer.stop();
+    total_nodes_expanded_per_iteration= total_nodes_expanded_per_iteration + nodes;
 
     return IN_PROGRESS;
 }

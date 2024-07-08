@@ -28,9 +28,9 @@ class IBEX : public SearchAlgorithm {
     const bool force_idastar;
 
     int num_of_iterations;
-    std::vector<utils::Duration> iteration_times;
-    std::vector<int> iteration_budgets;
-    std::vector<int> nodes_expanded_per_iteration;
+    double total_iteration_times;
+    int total_iteration_budgets;
+    int total_nodes_expanded_per_iteration;
 
     int search_bound;
 
