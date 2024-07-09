@@ -28,9 +28,6 @@ class IBEX : public SearchAlgorithm {
     const bool force_idastar;
 
     int num_of_iterations;
-    double total_iteration_times;
-    int total_iteration_budgets;
-    int total_nodes_expanded_per_iteration;
     int exp_search_triggered;
 
     int search_bound;

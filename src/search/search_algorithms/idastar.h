@@ -24,9 +24,6 @@ class IDAstar : public SearchAlgorithm {
     const plugins::Options opts;
 
     int num_of_iterations;
-    double total_iteration_times;
-    int total_iteration_budgets;
-    int total_nodes_expanded_per_iteration;
 
     int nodes;
 

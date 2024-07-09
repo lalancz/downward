@@ -41,6 +41,9 @@ void IDAstar::initialize() {
     statistics.inc_evaluated_states();
     
     search_bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
+
+    operatorPath.reserve(search_bound);
+    solutionPath.reserve(search_bound);
 }
 
 void IDAstar::print_statistics() const {
@@ -56,27 +59,14 @@ SearchStatus IDAstar::step() {
     operatorPath.clear();
     solutionPath.clear();
 
-    operatorPath.reserve(search_bound);
-    solutionPath.reserve(search_bound);
-
-    total_iteration_budgets = total_iteration_budgets + search_bound;
-
-    log << "The current bound is " << search_bound << endl;
+    log << "Iteration bound: " << search_bound << endl;
     int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound);
     if (t == AUX_SOLVED) {
-        total_iteration_times = total_iteration_times + iteration_timer.stop();
-        total_nodes_expanded_per_iteration= total_nodes_expanded_per_iteration + nodes;
-
         log << "Number of iterations: " << num_of_iterations << endl;
 
-        double average_iteration_time = total_iteration_times / num_of_iterations;
-        log << "Average iteration time: " << average_iteration_time << endl;
-
-        float average_budget = total_iteration_budgets / num_of_iterations;
-        log << "Average iteration budget: " << average_budget << endl;
-
-        float average_nodes_expanded = total_nodes_expanded_per_iteration / num_of_iterations;
-        log << "Average nodes expanded per iteration: " << average_nodes_expanded << endl;
+        log << "Iteration took (seconds): " << iteration_timer.stop() << endl;
+    
+        log << "Nodes expanded in current iteration: " << nodes << endl;
 
         set_plan(operatorPath);
         return SOLVED;
@@ -84,10 +74,11 @@ SearchStatus IDAstar::step() {
         return FAILED;
     }
 
-    search_bound = t;
+    log << "Iteration took (seconds): " << iteration_timer.stop() << endl;
 
-    total_iteration_times = total_iteration_times + iteration_timer.stop();
-    total_nodes_expanded_per_iteration= total_nodes_expanded_per_iteration + nodes;
+    log << "Nodes expanded in current iteration: " << nodes << endl;
+
+    search_bound = t;
 
     return IN_PROGRESS;
 }
