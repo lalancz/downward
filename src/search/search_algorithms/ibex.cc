@@ -38,6 +38,8 @@ void IBEX::initialize() {
     if (force_idastar)
         nodes = 1000000;
 
+    exp_search_triggered = 0;
+
     num_of_iterations = 0;
 
     State initial_state = task_proxy.get_initial_state();
@@ -79,6 +81,7 @@ SearchStatus IBEX::step() {
         }
 
         log << "Past the first search" << endl;
+        exp_search_triggered = 1;
 
         int delta = 0;
         int nextCost;
@@ -123,6 +126,8 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     utils::Timer iteration_timer;
     
     limitedDFS(initial_state, 0, costLimit, nodeLimit, currentPath, solutionPath);
+
+    log << "Number of nodes expanded in current iteration: " << nodes << " with bound: " << costLimit << endl;
 
     total_iteration_times = total_iteration_times + iteration_timer.stop();
     total_iteration_budgets = total_iteration_budgets + costLimit;
@@ -213,6 +218,8 @@ bool IBEX::check_goal() {
 
         float average_nodes_expanded = total_nodes_expanded_per_iteration / num_of_iterations;
         log << "Average nodes expanded per iteration: " << average_nodes_expanded << endl;
+
+        log << "Did exp search trigger: " << exp_search_triggered << endl;
 
         set_plan(solutionPath);
         return true;
