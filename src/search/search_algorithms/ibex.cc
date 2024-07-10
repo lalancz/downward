@@ -37,9 +37,6 @@ void IBEX::initialize() {
     // force nodes >= c_1 * budget to trigger in step function
     log << "Conducting IBEX search" << endl;
 
-    if (force_idastar)
-        nodes = 1000000;
-
     exp_search_triggered = 0;
 
     num_of_iterations = 0;
@@ -79,7 +76,7 @@ SearchStatus IBEX::step() {
 
         i = interval_intersection(i, search(i.first, numeric_limits<int>::max()));
         log << "i = [" << i.first << ", " << i.second << "]" << endl;
-        if (nodes >= c_1 * budget) {
+        if (nodes >= c_1 * budget || force_idastar) {
             budget = nodes;
             continue;
         }
