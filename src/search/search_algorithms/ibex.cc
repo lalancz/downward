@@ -35,7 +35,7 @@ IBEX::IBEX(const plugins::Options &opts)
 
 void IBEX::initialize() {
     // force nodes >= c_1 * budget to trigger in step function
-    log << "Conducting IBEX search" << endl;
+    log << "Conducting IBEX search with path checking" << endl;
 
     exp_search_triggered = 0;
 
@@ -193,6 +193,9 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         State succ_state = currState.get_unregistered_successor(op);
         statistics.inc_generated();
 
+        if (pathContains(currentPath, succ_state))
+            continue;
+
         int succ_g = pathCost + get_adjusted_cost(op);
         
         currentSolutionPath.push_back(op_id);
@@ -203,6 +206,15 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         currentPath.pop_back();
         currentSolutionPath.pop_back();
     }
+}
+
+bool IBEX::pathContains(std::vector<State> &path, State state) {
+    for (State state_temp : path) {
+        if (state_temp == state) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool IBEX::check_goal() {
