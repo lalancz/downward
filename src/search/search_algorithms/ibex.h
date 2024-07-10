@@ -34,8 +34,7 @@ class IBEX : public SearchAlgorithm {
 
     std::pair<int, int> interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2);
     std::pair<int, int> search(int costLimit, int nodeLimit);
-    void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, std::vector<State> &currentPath,
-        std::vector<OperatorID> &currentSolutionPath);
+    void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, std::vector<OperatorID> &currentSolutionPath);
 
     bool check_goal();
 

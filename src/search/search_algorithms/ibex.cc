@@ -121,12 +121,11 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
 
     State initial_state = task_proxy.get_initial_state();
 
-    std::vector<State> currentPath;
     std::vector<OperatorID> solutionPath;
 
     utils::Timer iteration_timer;
     
-    limitedDFS(initial_state, 0, costLimit, nodeLimit, currentPath, solutionPath);
+    limitedDFS(initial_state, 0, costLimit, nodeLimit, solutionPath);
 
     log << "Iteration took (seconds): " << iteration_timer.stop() << endl;
 
@@ -143,8 +142,7 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     }
 }
 
-void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, vector<State> &currentPath,
-        vector<OperatorID> &currentSolutionPath) {
+void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, vector<OperatorID> &currentSolutionPath) {
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
@@ -196,11 +194,9 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         int succ_g = pathCost + get_adjusted_cost(op);
         
         currentSolutionPath.push_back(op_id);
-        currentPath.push_back(succ_state);
 
-        limitedDFS(succ_state, succ_g, costLimit, nodeLimit, currentPath, currentSolutionPath);
+        limitedDFS(succ_state, succ_g, costLimit, nodeLimit, currentSolutionPath);
 
-        currentPath.pop_back();
         currentSolutionPath.pop_back();
     }
 }
