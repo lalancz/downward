@@ -35,6 +35,8 @@ IBEX::IBEX(const plugins::Options &opts)
 
 void IBEX::initialize() {
     // force nodes >= c_1 * budget to trigger in step function
+    log << "Conducting IBEX search" << endl;
+
     if (force_idastar)
         nodes = 1000000;
 
@@ -50,6 +52,8 @@ void IBEX::initialize() {
     solutionCost = numeric_limits<int>::max();
     budget = 0;
     i = make_pair(eval_context.get_evaluator_value_or_infinity(evaluator.get()), numeric_limits<int>::max());
+
+    log << "i = [" << i.first << ", " << i.second << "]" << endl;
 }
 
 void IBEX::print_statistics() const {
@@ -67,11 +71,11 @@ std::pair<int, int> IBEX::interval_intersection(std::pair<int, int> i1, std::pai
 
 SearchStatus IBEX::step() {
     while (solutionCost > i.first) {
-        log << "i = [" << i.first << ", " << i.second << "]" << endl;
         num_of_iterations++;
 
         solutionLowerBound = i.first;
         i.second = numeric_limits<int>::max();
+        log << "i = [" << i.first << ", " << i.second << "]" << endl;
 
         i = interval_intersection(i, search(i.first, numeric_limits<int>::max()));
         log << "i = [" << i.first << ", " << i.second << "]" << endl;
