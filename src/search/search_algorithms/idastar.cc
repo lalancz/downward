@@ -54,7 +54,7 @@ SearchStatus IDAstar::step() {
     operatorPath.clear();
 
     log << "Iteration bound: " << search_bound << endl;
-    int t = search(operatorPath, 0, task_proxy.get_initial_state(), search_bound);
+    int t = search(task_proxy.get_initial_state(), 0, search_bound);
     if (t == AUX_SOLVED) {
         log << "Number of iterations: " << num_of_iterations << endl;
 
@@ -77,7 +77,7 @@ SearchStatus IDAstar::step() {
     return IN_PROGRESS;
 }
 
-int IDAstar::search(std::vector<OperatorID> &operatorPath, int pathCost, State currState, int bound) {
+int IDAstar::search(State currState, int pathCost, int bound) {
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
@@ -106,7 +106,7 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, int pathCost, State c
             
         operatorPath.push_back(op_id);
 
-        int t = search(operatorPath, pathCost + get_adjusted_cost(op), succ_state, bound);
+        int t = search(succ_state, pathCost + get_adjusted_cost(op), bound);
         if (t == AUX_SOLVED) {
             return AUX_SOLVED;
         } else if (t < next_bound) {

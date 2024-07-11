@@ -32,17 +32,6 @@ class IBEX : public SearchAlgorithm {
 
     int search_bound;
 
-    std::pair<int, int> interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2);
-    std::pair<int, int> search(int costLimit, int nodeLimit);
-    void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit, std::vector<OperatorID> &currentSolutionPath);
-
-    bool check_goal();
-
-protected:
-    virtual void initialize() override;
-    virtual SearchStatus step() override;
-
-public:
     Plan solutionPath;
     int solutionCost;
     int solutionLowerBound;
@@ -57,6 +46,20 @@ public:
 
     std::pair<int, int> i;
 
+    std::vector<State> currentPath;
+    std::vector<OperatorID> solutionPathOps;
+
+    std::pair<int, int> interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2);
+    std::pair<int, int> search(int costLimit, int nodeLimit);
+    void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit);
+
+    bool check_goal();
+
+protected:
+    virtual void initialize() override;
+    virtual SearchStatus step() override;
+
+public:
     explicit IBEX(const plugins::Options &opts);
     virtual ~IBEX() = default;
 

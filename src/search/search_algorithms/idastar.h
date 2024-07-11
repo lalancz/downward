@@ -31,7 +31,7 @@ class IDAstar : public SearchAlgorithm {
 
     std::vector<OperatorID> operatorPath;
 
-    int search(std::vector<OperatorID> &operatorPath, int pathCost, State currState, int bound);
+    int search(State currState, int pathCost, int bound);
 
 protected:
     virtual void initialize() override;
