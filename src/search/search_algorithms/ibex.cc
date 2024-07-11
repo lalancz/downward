@@ -77,13 +77,14 @@ SearchStatus IBEX::step() {
 
         i = interval_intersection(i, search(i.first, numeric_limits<int>::max()));
         log << "i = [" << i.first << ", " << i.second << "]" << endl;
+        log << "Nodes expanded in current regular IDA* iteration: " << nodes << endl;
         if (nodes >= c_1 * budget || force_idastar) {
             budget = nodes;
+            log << "Did exp search trigger: 0" << endl;
             continue;
         }
 
-        log << "Past the first search" << endl;
-        exp_search_triggered = 1;
+        log << "Did exp search trigger: 1" << endl;
 
         int delta = 0;
         int nextCost;
@@ -224,8 +225,6 @@ bool IBEX::check_goal() {
         log << "Solution found with cost: " << solutionCost << endl;
         
         log << "Number of iterations: " << num_of_iterations << endl;
-
-        log << "Did exp search trigger: " << exp_search_triggered << endl;
 
         set_plan(solutionPath);
         return true;
