@@ -35,15 +35,10 @@ void IDAstar::initialize() {
 
     State initial_state = task_proxy.get_initial_state();
 
-    solutionPath.push_back(initial_state);
-
     EvaluationContext eval_context(initial_state, 0, true, &statistics);
     statistics.inc_evaluated_states();
     
     search_bound = eval_context.get_evaluator_value_or_infinity(f_evaluator.get());
-
-    operatorPath.reserve(search_bound);
-    solutionPath.reserve(search_bound);
 }
 
 void IDAstar::print_statistics() const {
@@ -57,10 +52,9 @@ SearchStatus IDAstar::step() {
     utils::Timer iteration_timer;
 
     operatorPath.clear();
-    solutionPath.clear();
 
     log << "Iteration bound: " << search_bound << endl;
-    int t = search(operatorPath, solutionPath, 0, task_proxy.get_initial_state(), search_bound);
+    int t = search(operatorPath, 0, task_proxy.get_initial_state(), search_bound);
     if (t == AUX_SOLVED) {
         log << "Number of iterations: " << num_of_iterations << endl;
 
@@ -83,8 +77,7 @@ SearchStatus IDAstar::step() {
     return IN_PROGRESS;
 }
 
-int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &solutionPath, int pathCost, 
-        State currState, int bound) {
+int IDAstar::search(std::vector<OperatorID> &operatorPath, int pathCost, State currState, int bound) {
 
     EvaluationContext eval_context(currState, pathCost, false, &statistics);
     statistics.inc_evaluated_states();
@@ -110,34 +103,20 @@ int IDAstar::search(std::vector<OperatorID> &operatorPath, std::vector<State> &s
         State succ_state = currState.get_unregistered_successor(op);
         statistics.inc_generated();
         StateID succ_id = succ_state.get_id();
-
-        if (pathContains(solutionPath, succ_state))
-            continue;
             
-        solutionPath.push_back(succ_state);
         operatorPath.push_back(op_id);
 
-        int t = search(operatorPath, solutionPath, pathCost + get_adjusted_cost(op), succ_state, bound);
+        int t = search(operatorPath, pathCost + get_adjusted_cost(op), succ_state, bound);
         if (t == AUX_SOLVED) {
             return AUX_SOLVED;
         } else if (t < next_bound) {
             next_bound = t;
         }
 
-        solutionPath.pop_back();
         operatorPath.pop_back();
     }
 
     return next_bound;
-}
-
-bool IDAstar::pathContains(std::vector<State> &path, State state) {
-    for (State state_temp : path) {
-        if (state_temp == state) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

@@ -30,11 +30,8 @@ class IDAstar : public SearchAlgorithm {
     std::shared_ptr<Evaluator> f_evaluator;
 
     std::vector<OperatorID> operatorPath;
-    std::vector<State> solutionPath;
 
-    int search(std::vector<OperatorID> &operatorPath, std::vector<State> &solutionPath, int pathCost, 
-        State currState, int bound);
-    bool pathContains(std::vector<State> &path, State state);
+    int search(std::vector<OperatorID> &operatorPath, int pathCost, State currState, int bound);
 
 protected:
     virtual void initialize() override;
