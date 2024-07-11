@@ -25,7 +25,8 @@ namespace idastar {
 IDAstar::IDAstar(const plugins::Options &opts)
     : SearchAlgorithm(opts),
       opts(opts),
-      f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)) {
+      f_evaluator(opts.get<shared_ptr<Evaluator>>("f_eval", nullptr)),
+      path_checking(opts.get<bool>("path_checking")) {
 }
 
 void IDAstar::initialize() {
@@ -51,7 +52,8 @@ SearchStatus IDAstar::step() {
     nodes = 0;
     utils::Timer iteration_timer;
 
-    operatorPath.clear();
+    currentPath.clear();
+    solutionPathOps.clear();
 
     log << "Iteration bound: " << search_bound << endl;
     int t = search(task_proxy.get_initial_state(), 0, search_bound);
@@ -62,7 +64,7 @@ SearchStatus IDAstar::step() {
     
         log << "Nodes expanded in current iteration: " << nodes << endl;
 
-        set_plan(operatorPath);
+        set_plan(solutionPathOps);
         return SOLVED;
     } else if (t == numeric_limits<int>::max()) {
         return FAILED;
@@ -103,8 +105,14 @@ int IDAstar::search(State currState, int pathCost, int bound) {
         State succ_state = currState.get_unregistered_successor(op);
         statistics.inc_generated();
         StateID succ_id = succ_state.get_id();
+
+        if (path_checking && pathContains(currentPath, succ_state))
+            continue;
             
-        operatorPath.push_back(op_id);
+        solutionPathOps.push_back(op_id);
+
+        if (path_checking)
+            currentPath.push_back(succ_state);
 
         int t = search(succ_state, pathCost + get_adjusted_cost(op), bound);
         if (t == AUX_SOLVED) {
@@ -113,10 +121,22 @@ int IDAstar::search(State currState, int pathCost, int bound) {
             next_bound = t;
         }
 
-        operatorPath.pop_back();
+        solutionPathOps.pop_back();
+
+        if (path_checking)
+            currentPath.pop_back();
     }
 
     return next_bound;
+}
+
+bool IDAstar::pathContains(std::vector<State> &path, State state) {
+    for (State state_temp : path) {
+        if (state_temp == state) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void add_options_to_feature(plugins::Feature &feature) {

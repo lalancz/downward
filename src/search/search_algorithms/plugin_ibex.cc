@@ -29,6 +29,11 @@ public:
             "force_idastar",
             "false");
 
+        add_option<bool>(
+            "path_checking",
+            "path_checking",
+            "false");
+
         ibex::add_options_to_feature(*this);
     }
 };

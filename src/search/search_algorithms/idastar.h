@@ -22,16 +22,18 @@ constexpr int AUX_SOLVED = -1;
 class IDAstar : public SearchAlgorithm {
     int search_bound;
     const plugins::Options opts;
+    std::shared_ptr<Evaluator> f_evaluator;
+    const bool path_checking;
 
     int num_of_iterations;
 
     int nodes;
 
-    std::shared_ptr<Evaluator> f_evaluator;
-
-    std::vector<OperatorID> operatorPath;
+    std::vector<State> currentPath;
+    std::vector<OperatorID> solutionPathOps;
 
     int search(State currState, int pathCost, int bound);
+    bool pathContains(std::vector<State> &path, State state);
 
 protected:
     virtual void initialize() override;

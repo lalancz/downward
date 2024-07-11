@@ -13,6 +13,12 @@ public:
         document_synopsis("");
 
         add_option<shared_ptr<Evaluator>>("eval", "evaluator");
+
+        add_option<bool>(
+            "path_checking",
+            "path_checking",
+            "false");
+
         idastar::add_options_to_feature(*this);
     }
 

@@ -22,10 +22,10 @@ namespace ibex {
 class IBEX : public SearchAlgorithm {
     const plugins::Options opts;
     std::shared_ptr<Evaluator> evaluator;
-
     const int c_1;
     const int c_2;
     const bool force_idastar;
+    const bool path_checking;
 
     int num_of_iterations;
     int exp_search_triggered;
@@ -52,6 +52,7 @@ class IBEX : public SearchAlgorithm {
     std::pair<int, int> interval_intersection(std::pair<int, int> i1, std::pair<int, int> i2);
     std::pair<int, int> search(int costLimit, int nodeLimit);
     void limitedDFS(State currState, int pathCost, int costLimit, int nodeLimit);
+    bool pathContains(std::vector<State> &path, State state);
 
     bool check_goal();
 

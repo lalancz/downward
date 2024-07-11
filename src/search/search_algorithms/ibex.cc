@@ -30,7 +30,8 @@ IBEX::IBEX(const plugins::Options &opts)
       evaluator(opts.get<shared_ptr<Evaluator>>("eval", nullptr)),
       c_1(opts.get<int>("c_1")),
       c_2(opts.get<int>("c_2")),
-      force_idastar(opts.get<bool>("force_idastar")) {
+      force_idastar(opts.get<bool>("force_idastar")),
+      path_checking(opts.get<bool>("path_checking")) {
 }
 
 void IBEX::initialize() {
@@ -119,6 +120,7 @@ std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
     f_above = numeric_limits<int>::max();
     nodes = 0;
     
+    currentPath.clear();
     solutionPathOps.clear();
 
     utils::Timer iteration_timer;
@@ -189,14 +191,32 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
         State succ_state = currState.get_unregistered_successor(op);
         statistics.inc_generated();
 
+        if (path_checking && pathContains(currentPath, succ_state))
+            continue;
+
         int succ_g = pathCost + get_adjusted_cost(op);
         
         solutionPathOps.push_back(op_id);
 
+        if (path_checking)
+            currentPath.push_back(succ_state);
+
         limitedDFS(succ_state, succ_g, costLimit, nodeLimit);
 
         solutionPathOps.pop_back();
+
+        if (path_checking)
+            currentPath.pop_back();
     }
+}
+
+bool IBEX::pathContains(std::vector<State> &path, State state) {
+    for (State state_temp : path) {
+        if (state_temp == state) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool IBEX::check_goal() {
