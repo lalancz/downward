@@ -30,8 +30,6 @@ class IBEX : public SearchAlgorithm {
     int num_of_iterations;
     int exp_search_triggered;
 
-    int search_bound;
-
     Plan solutionPath;
     int solutionCost;
     int solutionLowerBound;
