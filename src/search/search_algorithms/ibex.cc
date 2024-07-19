@@ -109,8 +109,15 @@ SearchStatus IBEX::step() {
             return SOLVED;
     }
 
-    if (check_goal()) 
+    if (!solutionPath.empty()) {
+        log << "Solution found with cost: " << solutionCost << endl;
+        
+        log << "Number of iterations: " << num_of_iterations << endl;
+
+        set_plan(solutionPath);
+        
         return SOLVED;
+    }
     
     return FAILED;
 }
