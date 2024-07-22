@@ -40,8 +40,6 @@ class IBEX : public SearchAlgorithm {
     int f_below;
     int f_above;
 
-    bool goalFoundCurrentIteration;
-
     std::pair<int, int> i;
 
     std::vector<State> currentPath;

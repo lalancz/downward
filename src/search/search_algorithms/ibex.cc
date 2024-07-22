@@ -116,7 +116,6 @@ SearchStatus IBEX::step() {
 }
 
 std::pair<int, int> IBEX::search(int costLimit, int nodeLimit) {
-    goalFoundCurrentIteration = false;
     f_below = 0;
     f_above = numeric_limits<int>::max();
     nodes = 0;
@@ -174,7 +173,6 @@ void IBEX::limitedDFS(State currState, int pathCost, int costLimit, int nodeLimi
     }
 
     if (task_properties::is_goal_state(task_proxy, currState)) {
-        goalFoundCurrentIteration = true;
         solutionPath = solutionPathOps;
         solutionCost = currF;
         log << "Goal found with cost: " << solutionCost << endl;
